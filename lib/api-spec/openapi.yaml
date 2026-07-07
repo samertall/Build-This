@@ -1,22 +1,47 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AI-Powered UX Workflow Automation API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: projects
+    description: Project management
+  - name: sources
+    description: Project source files and URLs
+  - name: analysis
+    description: AI analysis and agent outputs
+  - name: insights
+    description: Research insights
+  - name: problems
+    description: Problem statements
+  - name: recommendations
+    description: UX recommendations
+  - name: journeys
+    description: User journeys
+  - name: features
+    description: Feature prioritization
+  - name: tasks
+    description: Generated tasks
+  - name: presentations
+    description: Presentation generation
+  - name: agents
+    description: AI agent execution
+  - name: approvals
+    description: Approval workflow
+  - name: dashboard
+    description: Dashboard summaries
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +49,560 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary stats
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: List all projects
+      responses:
+        "200":
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+    post:
+      operationId: createProject
+      tags: [projects]
+      summary: Create a new project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectInput"
+      responses:
+        "201":
+          description: Created project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+
+  /projects/{id}:
+    get:
+      operationId: getProject
+      tags: [projects]
+      summary: Get a project by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateProject
+      tags: [projects]
+      summary: Update a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectUpdate"
+      responses:
+        "200":
+          description: Updated project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+    delete:
+      operationId: deleteProject
+      tags: [projects]
+      summary: Delete a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /projects/{id}/sources:
+    get:
+      operationId: listProjectSources
+      tags: [sources]
+      summary: List sources for a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of sources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProjectSource"
+    post:
+      operationId: addProjectSource
+      tags: [sources]
+      summary: Add a source (URL or text note) to a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectSourceInput"
+      responses:
+        "201":
+          description: Created source
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectSource"
+
+  /projects/{id}/sources/{sourceId}:
+    delete:
+      operationId: deleteProjectSource
+      tags: [sources]
+      summary: Delete a project source
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: sourceId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /projects/{id}/analyze:
+    post:
+      operationId: runAnalysis
+      tags: [analysis]
+      summary: Run AI analysis on a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalysisRequest"
+      responses:
+        "200":
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResult"
+
+  /projects/{id}/insights:
+    get:
+      operationId: listInsights
+      tags: [insights]
+      summary: List research insights for a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Insights
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ResearchInsight"
+
+  /projects/{id}/insights/{insightId}/approve:
+    post:
+      operationId: approveInsight
+      tags: [insights, approvals]
+      summary: Approve or reject an insight
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: insightId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalInput"
+      responses:
+        "200":
+          description: Updated insight
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResearchInsight"
+
+  /projects/{id}/problems:
+    get:
+      operationId: listProblems
+      tags: [problems]
+      summary: List problem statements for a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Problem statements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProblemStatement"
+
+  /projects/{id}/problems/{problemId}/approve:
+    post:
+      operationId: approveProblem
+      tags: [problems, approvals]
+      summary: Approve or reject a problem statement
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: problemId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalInput"
+      responses:
+        "200":
+          description: Updated problem
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemStatement"
+
+  /projects/{id}/recommendations:
+    get:
+      operationId: listRecommendations
+      tags: [recommendations]
+      summary: List UX recommendations for a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Recommendations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Recommendation"
+
+  /projects/{id}/recommendations/{recId}/approve:
+    post:
+      operationId: approveRecommendation
+      tags: [recommendations, approvals]
+      summary: Approve or reject a recommendation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: recId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalInput"
+      responses:
+        "200":
+          description: Updated recommendation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recommendation"
+
+  /projects/{id}/journeys:
+    get:
+      operationId: listJourneys
+      tags: [journeys]
+      summary: List user journeys for a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Journeys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserJourney"
+
+  /projects/{id}/features:
+    get:
+      operationId: listFeatures
+      tags: [features]
+      summary: List prioritized features for a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Features
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Feature"
+    post:
+      operationId: createFeature
+      tags: [features]
+      summary: Add a feature
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeatureInput"
+      responses:
+        "201":
+          description: Created feature
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Feature"
+
+  /projects/{id}/features/{featureId}:
+    patch:
+      operationId: updateFeature
+      tags: [features]
+      summary: Update feature score or priority
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: featureId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeatureUpdate"
+      responses:
+        "200":
+          description: Updated feature
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Feature"
+
+  /projects/{id}/tasks:
+    get:
+      operationId: listTasks
+      tags: [tasks]
+      summary: List tasks for a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+
+  /projects/{id}/tasks/{taskId}:
+    patch:
+      operationId: updateTask
+      tags: [tasks]
+      summary: Update a task status or details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
+  /projects/{id}/presentations:
+    get:
+      operationId: listPresentations
+      tags: [presentations]
+      summary: List presentations for a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Presentations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Presentation"
+    post:
+      operationId: generatePresentation
+      tags: [presentations]
+      summary: Generate a presentation for a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresentationInput"
+      responses:
+        "201":
+          description: Generated presentation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Presentation"
+
+  /projects/{id}/stats:
+    get:
+      operationId: getProjectStats
+      tags: [projects]
+      summary: Get project-level stats (counts, approval rates, time saved)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Project stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectStats"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +610,555 @@ components:
       properties:
         status:
           type: string
+      required: [status]
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalProjects:
+          type: integer
+        activeProjects:
+          type: integer
+        totalInsights:
+          type: integer
+        totalTasks:
+          type: integer
+        pendingApprovals:
+          type: integer
+        totalPresentations:
+          type: integer
+        estimatedTimeSavedHours:
+          type: number
+        recentProjects:
+          type: array
+          items:
+            $ref: "#/components/schemas/Project"
+      required:
+        - totalProjects
+        - activeProjects
+        - totalInsights
+        - totalTasks
+        - pendingApprovals
+        - totalPresentations
+        - estimatedTimeSavedHours
+        - recentProjects
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        productType:
+          type: ["string", "null"]
+        industry:
+          type: ["string", "null"]
+        stage:
+          type: ["string", "null"]
+        businessGoals:
+          type: ["string", "null"]
+        targetUsers:
+          type: ["string", "null"]
+        status:
+          type: string
+        analysisStatus:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - name
+        - status
+        - createdAt
+        - updatedAt
+
+    ProjectInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        productType:
+          type: string
+        industry:
+          type: string
+        stage:
+          type: string
+        businessGoals:
+          type: string
+        targetUsers:
+          type: string
+      required: [name]
+
+    ProjectUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        productType:
+          type: string
+        industry:
+          type: string
+        stage:
+          type: string
+        businessGoals:
+          type: string
+        targetUsers:
+          type: string
+        status:
+          type: string
+        analysisStatus:
+          type: string
+
+    ProjectSource:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        type:
+          type: string
+        name:
+          type: string
+        content:
+          type: ["string", "null"]
+        url:
+          type: ["string", "null"]
+        classification:
+          type: ["string", "null"]
+        processingStatus:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - projectId
+        - type
+        - name
+        - processingStatus
+        - createdAt
+
+    ProjectSourceInput:
+      type: object
+      properties:
+        type:
+          type: string
+        name:
+          type: string
+        content:
+          type: string
+        url:
+          type: string
+        classification:
+          type: string
+      required: [type, name]
+
+    AnalysisRequest:
+      type: object
+      properties:
+        agentTypes:
+          type: array
+          items:
+            type: string
+        forceRerun:
+          type: boolean
+      required: [agentTypes]
+
+    AnalysisResult:
+      type: object
+      properties:
+        status:
+          type: string
+        agentsRun:
+          type: array
+          items:
+            type: string
+        insightsGenerated:
+          type: integer
+        problemsGenerated:
+          type: integer
+        recommendationsGenerated:
+          type: integer
+        featuresGenerated:
+          type: integer
+        tasksGenerated:
+          type: integer
+        message:
+          type: string
       required:
         - status
+        - agentsRun
+        - insightsGenerated
+        - problemsGenerated
+        - recommendationsGenerated
+        - featuresGenerated
+        - tasksGenerated
+        - message
 
+    ResearchInsight:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        agentType:
+          type: string
+        cluster:
+          type: ["string", "null"]
+        insight:
+          type: string
+        evidence:
+          type: ["string", "null"]
+        confidence:
+          type: ["string", "null"]
+        tags:
+          type: ["string", "null"]
+        approvalStatus:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - projectId
+        - agentType
+        - insight
+        - approvalStatus
+        - createdAt
+
+    ProblemStatement:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        statement:
+          type: string
+        howMightWe:
+          type: ["string", "null"]
+        rootCause:
+          type: ["string", "null"]
+        businessImpact:
+          type: ["string", "null"]
+        userSegment:
+          type: ["string", "null"]
+        successMetric:
+          type: ["string", "null"]
+        approvalStatus:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - projectId
+        - statement
+        - approvalStatus
+        - createdAt
+
+    Recommendation:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: ["string", "null"]
+        userProblem:
+          type: ["string", "null"]
+        businessGoal:
+          type: ["string", "null"]
+        evidence:
+          type: ["string", "null"]
+        expectedImpact:
+          type: ["string", "null"]
+        effort:
+          type: ["string", "null"]
+        risk:
+          type: ["string", "null"]
+        confidence:
+          type: ["string", "null"]
+        priority:
+          type: ["string", "null"]
+        approvalStatus:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - projectId
+        - title
+        - description
+        - approvalStatus
+        - createdAt
+
+    UserJourney:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        title:
+          type: string
+        persona:
+          type: ["string", "null"]
+        scenario:
+          type: ["string", "null"]
+        journeyType:
+          type: string
+        stages:
+          type: object
+        approvalStatus:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - projectId
+        - title
+        - journeyType
+        - stages
+        - approvalStatus
+        - createdAt
+
+    Feature:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        category:
+          type: ["string", "null"]
+        riceScore:
+          type: ["number", "null"]
+        reach:
+          type: ["integer", "null"]
+        impact:
+          type: ["integer", "null"]
+        confidence:
+          type: ["integer", "null"]
+        effort:
+          type: ["integer", "null"]
+        moscowPriority:
+          type: ["string", "null"]
+        phase:
+          type: ["string", "null"]
+        approvalStatus:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - projectId
+        - title
+        - approvalStatus
+        - createdAt
+
+    FeatureInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        reach:
+          type: integer
+        impact:
+          type: integer
+        confidence:
+          type: integer
+        effort:
+          type: integer
+        moscowPriority:
+          type: string
+        phase:
+          type: string
+      required: [title]
+
+    FeatureUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        reach:
+          type: integer
+        impact:
+          type: integer
+        confidence:
+          type: integer
+        effort:
+          type: integer
+        moscowPriority:
+          type: string
+        phase:
+          type: string
+        approvalStatus:
+          type: string
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        category:
+          type: ["string", "null"]
+        userStory:
+          type: ["string", "null"]
+        acceptanceCriteria:
+          type: ["string", "null"]
+        priority:
+          type: ["string", "null"]
+        effort:
+          type: ["string", "null"]
+        status:
+          type: string
+        owner:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - projectId
+        - title
+        - status
+        - createdAt
+
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        owner:
+          type: string
+        priority:
+          type: string
+
+    Presentation:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        title:
+          type: string
+        presentationType:
+          type: ["string", "null"]
+        audience:
+          type: ["string", "null"]
+        slideCount:
+          type: ["integer", "null"]
+        slides:
+          type: object
+        status:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - projectId
+        - title
+        - slides
+        - status
+        - createdAt
+
+    PresentationInput:
+      type: object
+      properties:
+        title:
+          type: string
+        presentationType:
+          type: string
+        audience:
+          type: string
+        tone:
+          type: string
+        slideCount:
+          type: integer
+        includeNotes:
+          type: boolean
+        theme:
+          type: string
+      required: [title]
+
+    ApprovalInput:
+      type: object
+      properties:
+        status:
+          type: string
+        comment:
+          type: string
+      required: [status]
+
+    ProjectStats:
+      type: object
+      properties:
+        insightCount:
+          type: integer
+        approvedInsights:
+          type: integer
+        problemCount:
+          type: integer
+        approvedProblems:
+          type: integer
+        recommendationCount:
+          type: integer
+        approvedRecommendations:
+          type: integer
+        featureCount:
+          type: integer
+        taskCount:
+          type: integer
+        presentationCount:
+          type: integer
+        sourceCount:
+          type: integer
+        estimatedTimeSaved:
+          type: number
+      required:
+        - insightCount
+        - approvedInsights
+        - problemCount
+        - approvedProblems
+        - recommendationCount
+        - approvedRecommendations
+        - featureCount
+        - taskCount
+        - presentationCount
+        - sourceCount
+        - estimatedTimeSaved
