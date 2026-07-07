@@ -1,0 +1,1599 @@
+You are a senior AI product architect, UX strategist, full-stack SaaS engineer, presentation designer, and agentic workflow specialist.
+
+Build a complete, production-ready web platform called:
+
+AI-Powered UX Workflow Automation
+For Smarter Digital Product Design
+
+Created by:
+Samer Tallauze
+Senior UX/UI Product Designer | Front-End | SEO | CX
+
+PRIMARY SOURCE
+
+Use the following portfolio page as an official project source:
+
+https://try.ka.nz/ai/samertallauze
+
+Also use the attached project pitch deck as the visual and content reference.
+
+Extract and organize all available:
+
+- Project descriptions
+- Titles and subtitles
+- Portfolio images
+- Certificate or credential graphics
+- Project screenshots
+- Personal branding information
+- Agentic AI project details
+- Problem statements
+- Solution descriptions
+- Workflow diagrams
+- Target-user information
+- Business-impact statements
+- Roadmap information
+- Keywords and positioning statements
+
+The website may be dynamically rendered or image-based. Use a headless browser when necessary, wait for all content to load, inspect the DOM, download original image assets, detect background images, inspect Open Graph metadata, and capture high-resolution screenshots only when the original asset is unavailable.
+
+Use OCR only for text that is embedded inside images and is unavailable in the HTML.
+
+Do not use blurry screenshots when a higher-resolution original image can be extracted.
+
+Do not invent information that cannot be verified. Label any generated recommendations as “AI Recommendations.”
+
+==================================================
+1. PRODUCT VISION
+==================================================
+
+Build an intelligent UX and digital product workflow platform that converts scattered project material into structured, actionable product-design outputs.
+
+The platform should act as an AI-powered UX co-pilot that helps teams move from:
+
+Research → Analysis → UX Strategy → User Flows → Feature Priorities → Wireframes → Content → Team Tasks → Presentations
+
+The main value proposition is:
+
+“From scattered UX inputs to clear product execution—faster, smarter, and aligned.”
+
+The platform must reduce repetitive UX planning, improve cross-functional alignment, shorten the research-to-decision cycle, and make UX recommendations directly actionable.
+
+Do not build a generic chatbot or a static dashboard.
+
+Build a structured agentic product with visible workflows, review checkpoints, reusable outputs, project history, collaboration, and export capabilities.
+
+==================================================
+2. CORE PROBLEM
+==================================================
+
+Modern digital product work is fragmented, repetitive, and slow.
+
+UX and product teams manage:
+
+- Research notes
+- User feedback
+- Stakeholder requests
+- Business goals
+- Existing content
+- Figma files
+- Screenshots
+- Analytics
+- Competitor references
+- Product requirements
+- SEO requirements
+- Development tasks
+- Marketing requirements
+- Project-management tickets
+
+These inputs are usually distributed across disconnected tools.
+
+This creates:
+
+- Scattered project context
+- Unclear requirements
+- Repeated manual synthesis
+- Missed user insights
+- Weak alignment between design and business goals
+- Generic UX recommendations
+- Slow decision-making
+- Ambiguous development tasks
+- Content gaps
+- Increased rework
+- Delayed product delivery
+
+The core challenge is:
+
+“How can teams move from messy project inputs to clear UX execution without losing user context, business objectives, evidence, or team alignment?”
+
+==================================================
+3. PRODUCT SOLUTION
+==================================================
+
+The platform must analyze project inputs such as user needs, business goals, content, research, screenshots, design files, and existing product material.
+
+It must then:
+
+1. Extract and organize the project context.
+2. Summarize research and stakeholder inputs.
+3. Identify pain points, risks, gaps, constraints, and opportunities.
+4. Separate evidence from AI assumptions.
+5. Create problem statements and UX hypotheses.
+6. Recommend UX and product improvements.
+7. Generate personas, jobs-to-be-done, and user segments when appropriate.
+8. Create user journeys and task flows.
+9. Prioritize features.
+10. Suggest information architecture.
+11. Generate wireframe directions.
+12. Recommend UX writing, content, accessibility, CX, and SEO improvements.
+13. Convert approved recommendations into team-ready tasks.
+14. Generate professional PowerPoint presentations.
+15. Export the final outputs to external workflow tools.
+
+The experience should feel like a structured digital UX consultancy rather than a conversational assistant.
+
+==================================================
+4. TARGET USERS
+==================================================
+
+Design the platform for the following roles.
+
+UX/UI Designers
+
+They need to transform research into:
+
+- Personas
+- User journeys
+- User flows
+- Information architecture
+- Wireframe directions
+- UX recommendations
+- Design priorities
+- Usability-test plans
+
+Product Managers
+
+They need to transform business goals into:
+
+- Product requirements
+- Feature priorities
+- Roadmap recommendations
+- Success metrics
+- User stories
+- Acceptance criteria
+- Risk assessments
+
+Developers
+
+They need:
+
+- Clear implementation tickets
+- Functional requirements
+- Edge cases
+- Acceptance criteria
+- Responsive behavior
+- Accessibility requirements
+- API and data requirements
+- Reduced ambiguity before development
+
+Content and Marketing Teams
+
+They need:
+
+- Content inventories
+- Messaging recommendations
+- UX writing
+- SEO recommendations
+- Content gaps
+- Conversion opportunities
+- Campaign actions
+- Product-positioning guidance
+
+Business Leaders and Stakeholders
+
+They need:
+
+- Executive summaries
+- Decision justifications
+- Business-impact estimates
+- Risks
+- Progress visibility
+- Strategic alignment
+- Professional presentations
+
+Create role-based dashboards and tailor the generated outputs according to each role.
+
+==================================================
+5. AGENTIC AI ARCHITECTURE
+==================================================
+
+Create a coordinated multi-agent workflow.
+
+Each agent must have a defined responsibility, input schema, output schema, and quality-control step.
+
+Agent 1: Project Context Agent
+
+Responsibilities:
+
+- Read uploaded and connected content.
+- Identify the project name, industry, product type, audience, business model, goals, constraints, timeline, and stakeholders.
+- Create a structured project brief.
+- Identify missing information.
+- Ask only high-value clarification questions.
+
+Outputs:
+
+- Project brief
+- Known facts
+- Missing information
+- Constraints
+- Source inventory
+- Initial assumptions
+
+Agent 2: Research Synthesis Agent
+
+Responsibilities:
+
+- Analyze research notes, interviews, surveys, feedback, reviews, and analytics.
+- Cluster similar findings.
+- Detect recurring pain points.
+- Separate direct evidence from interpretations.
+- Identify contradictory evidence.
+- Produce source-linked insights.
+
+Outputs:
+
+- Research summary
+- Insight clusters
+- Pain-point list
+- User needs
+- Evidence table
+- Confidence score
+- Research gaps
+
+Agent 3: Problem Framing Agent
+
+Responsibilities:
+
+- Convert research into clear problem statements.
+- Create “How might we” questions.
+- Identify root causes.
+- Map user problems to business impact.
+- Define measurable outcomes.
+
+Outputs:
+
+- Problem statements
+- Root-cause analysis
+- How-might-we questions
+- UX hypotheses
+- Business implications
+- Recommended success metrics
+
+Agent 4: UX Strategy Agent
+
+Responsibilities:
+
+- Recommend product and UX improvements.
+- Connect each recommendation to evidence.
+- Evaluate expected user value, business value, feasibility, and risk.
+- Detect accessibility, usability, conversion, CX, and SEO opportunities.
+
+Outputs:
+
+- UX opportunity list
+- Strategic recommendations
+- Risks
+- Quick wins
+- Long-term opportunities
+- Evidence and rationale
+
+Agent 5: Journey and Flow Agent
+
+Responsibilities:
+
+- Generate current-state and future-state user journeys.
+- Create task flows and user flows.
+- Identify friction points, emotional states, touchpoints, and opportunities.
+- Support multiple personas and scenarios.
+
+Outputs:
+
+- Journey maps
+- User flows
+- Task flows
+- Entry and exit points
+- Edge cases
+- Failure and recovery paths
+
+Agent 6: Feature Prioritization Agent
+
+Responsibilities:
+
+- Convert opportunities into features.
+- Score features using RICE, MoSCoW, impact-versus-effort, or a custom framework.
+- Allow the user to change scores manually.
+- Explain the prioritization.
+
+Outputs:
+
+- Prioritized backlog
+- MVP features
+- Future-phase features
+- Scoring matrix
+- Dependencies
+- Risks
+- Recommended roadmap
+
+Agent 7: Information Architecture Agent
+
+Responsibilities:
+
+- Recommend navigation structures.
+- Generate sitemaps.
+- Define content hierarchy.
+- Identify duplicate or missing sections.
+- Recommend labels and taxonomy.
+
+Outputs:
+
+- Sitemap
+- Navigation model
+- Page hierarchy
+- Content groups
+- Naming recommendations
+
+Agent 8: Wireframe Direction Agent
+
+Responsibilities:
+
+- Generate wireframe concepts based on approved flows and requirements.
+- Describe screen structure and component hierarchy.
+- Create low-fidelity visual concepts where supported.
+- Avoid pretending that generated concepts are validated designs.
+
+Outputs:
+
+- Screen list
+- Layout recommendations
+- Component requirements
+- Interaction notes
+- Responsive rules
+- Wireframe previews
+- Figma-ready design brief
+
+Agent 9: Content, CX and SEO Agent
+
+Responsibilities:
+
+- Review product content and user-facing messages.
+- Identify missing, duplicated, unclear, or low-value content.
+- Recommend UX writing.
+- Recommend page titles, headings, descriptions, keywords, calls to action, and structured content.
+- Review the end-to-end customer experience.
+
+Outputs:
+
+- Content inventory
+- Content-gap report
+- UX copy suggestions
+- SEO recommendations
+- CTA recommendations
+- CX improvement opportunities
+
+Agent 10: Task Orchestration Agent
+
+Responsibilities:
+
+- Convert approved outputs into actionable work items.
+- Create separate tasks for design, development, content, marketing, research, and QA.
+- Add priorities, owners, dependencies, estimates, acceptance criteria, and source references.
+
+Outputs:
+
+- Epics
+- User stories
+- Design tasks
+- Development tickets
+- Content tasks
+- Marketing tasks
+- QA tasks
+- Acceptance criteria
+- Definition of done
+
+Agent 11: Presentation Agent
+
+Responsibilities:
+
+- Convert project information and approved outputs into professional presentations.
+- Extract and reuse project images.
+- Generate presentation narratives suitable for executives, clients, employers, investors, or internal teams.
+- Produce editable PowerPoint files.
+
+Outputs:
+
+- Presentation outline
+- Slide copy
+- Visual recommendations
+- Speaker notes
+- Editable PPTX
+- PDF version
+- Presentation preview
+
+Agent 12: Quality and Governance Agent
+
+Responsibilities:
+
+- Check generated outputs for contradictions, unsupported claims, missing evidence, duplication, vague recommendations, and incomplete tasks.
+- Validate consistency across research, flows, features, tasks, and slides.
+- Flag low-confidence output.
+- Require human approval before publishing or exporting critical deliverables.
+
+Outputs:
+
+- Quality report
+- Conflicts
+- Missing evidence
+- Confidence indicators
+- Approval requirements
+- Revision recommendations
+
+==================================================
+6. HUMAN-IN-THE-LOOP WORKFLOW
+==================================================
+
+The system must not automatically convert every AI suggestion into a final decision.
+
+Create approval checkpoints after:
+
+- Project-context extraction
+- Research synthesis
+- Problem definition
+- UX recommendations
+- Feature prioritization
+- User-flow generation
+- Wireframe directions
+- Task generation
+- Presentation generation
+
+Allow users to:
+
+- Approve
+- Reject
+- Edit
+- Regenerate
+- Compare versions
+- Add comments
+- Request stronger evidence
+- Lock approved content
+
+Visually distinguish:
+
+- Source fact
+- User-provided fact
+- AI interpretation
+- AI recommendation
+- Approved decision
+- Rejected recommendation
+
+==================================================
+7. CORE PRODUCT MODULES
+==================================================
+
+A. Authentication and Organization Setup
+
+Include:
+
+- Email authentication
+- Google sign-in
+- Personal workspace
+- Team workspace
+- Organization profile
+- Invite members
+- Role and permission management
+- Workspace settings
+
+Recommended roles:
+
+- Workspace owner
+- Admin
+- Product manager
+- Designer
+- Developer
+- Content or marketing member
+- Stakeholder
+- Viewer
+
+B. Project Dashboard
+
+Display:
+
+- Active projects
+- Recent activity
+- Analysis progress
+- Pending approvals
+- Generated deliverables
+- Team assignments
+- Upcoming deadlines
+- Time saved
+- Project health
+- AI usage
+
+Use useful cards and charts, not decorative dashboard elements.
+
+C. New Project Wizard
+
+Step 1: Project basics
+
+- Project name
+- Product type
+- Industry
+- Current stage
+- Primary users
+- Business goals
+- Project owner
+
+Step 2: Define objectives
+
+- User problems
+- Business problems
+- Desired outcomes
+- KPIs
+- Timeline
+- Constraints
+
+Step 3: Upload context
+
+Support:
+
+- PDF
+- DOCX
+- PPTX
+- TXT
+- CSV
+- XLSX
+- Images
+- Screenshots
+- Website URLs
+- Research notes
+- Interview transcripts
+- Analytics exports
+- Product requirements
+- Existing presentations
+
+Step 4: Select outputs
+
+Allow selection of:
+
+- Executive summary
+- UX audit
+- Research synthesis
+- Persona
+- Jobs-to-be-done
+- User journey
+- User flow
+- Sitemap
+- Feature prioritization
+- Wireframe directions
+- Content recommendations
+- SEO recommendations
+- Team tasks
+- PowerPoint presentation
+
+Step 5: AI analysis plan
+
+Show:
+
+- Which agents will run
+- Expected outputs
+- Required approvals
+- Missing information
+- Estimated processing stages
+
+D. Project Input Hub
+
+Create a centralized area for:
+
+- Uploaded files
+- URLs
+- Text notes
+- Images
+- Figma links
+- Research
+- Analytics
+- Stakeholder requirements
+- Business documents
+- Competitor examples
+
+Provide:
+
+- File preview
+- Automatic classification
+- Tags
+- Search
+- Source status
+- Processing status
+- Duplicate detection
+- Source deletion
+- Version history
+
+E. AI Analysis Workspace
+
+Create a three-column layout:
+
+Left:
+Sources and project navigation
+
+Center:
+Generated analysis and structured outputs
+
+Right:
+Evidence, comments, confidence, version history, and approvals
+
+Allow users to select text and:
+
+- Convert it into a requirement
+- Create a task
+- Add it to the presentation
+- Challenge the recommendation
+- Request supporting evidence
+- Assign it to a team member
+
+F. Research Repository
+
+Include:
+
+- Searchable insight library
+- Research-tagging system
+- Pain-point clusters
+- Quotes
+- Evidence links
+- User segments
+- Themes
+- Contradictions
+- Confidence indicators
+
+G. User Journey Builder
+
+Support:
+
+- Current-state journey
+- Future-state journey
+- Stages
+- User goals
+- Actions
+- Thoughts
+- Emotions
+- Pain points
+- Touchpoints
+- Opportunities
+- Ownership
+- KPIs
+
+Include visual journey-map export.
+
+H. User Flow Builder
+
+Generate editable flow diagrams with:
+
+- Start points
+- User actions
+- Decisions
+- System responses
+- Success states
+- Error states
+- Recovery paths
+- Exit points
+
+Allow manual editing and export to image, PDF, SVG, and Figma-compatible formats where possible.
+
+I. Feature Prioritization Board
+
+Include multiple prioritization views:
+
+- RICE
+- MoSCoW
+- Impact versus effort
+- User value versus business value
+- Risk versus opportunity
+
+Allow users to:
+
+- Change weights
+- Edit scores
+- Drag and reorder features
+- Add dependencies
+- Set milestones
+- Compare prioritization methods
+- Save scenarios
+
+J. Wireframe Concept Studio
+
+Generate:
+
+- Page inventory
+- Screen requirements
+- Layout directions
+- Component hierarchy
+- Interaction notes
+- Mobile behavior
+- Desktop behavior
+- Empty states
+- Error states
+- Loading states
+- Accessibility requirements
+
+Allow the user to select a flow step and generate a wireframe concept for that step.
+
+K. Task Generator
+
+Generate detailed tasks containing:
+
+- Task title
+- Category
+- Description
+- Business rationale
+- User value
+- Priority
+- Owner
+- Estimate
+- Dependencies
+- Acceptance criteria
+- Edge cases
+- Accessibility requirements
+- Responsive requirements
+- Source evidence
+- Related flow
+- Related feature
+- Status
+
+Support kanban, list, and timeline views.
+
+L. Presentation Generator
+
+This is a major product feature and must be fully implemented.
+
+Users should be able to generate professional presentations from:
+
+- Uploaded project content
+- Extracted website content
+- Research findings
+- UX recommendations
+- User journeys
+- Prioritized features
+- Wireframe concepts
+- Tasks
+- Roadmap information
+- Project images
+
+Presentation types:
+
+- UX project pitch
+- Executive summary
+- Product strategy
+- UX audit
+- Research findings
+- Client proposal
+- Portfolio case study
+- Investor pitch
+- Internal project review
+- Roadmap presentation
+
+Presentation setup options:
+
+- Audience
+- Purpose
+- Tone
+- Slide count
+- Presentation type
+- Brand theme
+- Light or dark theme
+- Level of detail
+- Include speaker notes
+- Include source references
+- Include appendix
+
+Slide-count options:
+
+- 5-slide summary
+- 9-slide project pitch
+- 12-slide presentation
+- 15-slide detailed presentation
+- Custom slide count
+
+The default presentation for this project should include:
+
+1. Cover
+2. The problem
+3. The solution
+4. How it works
+5. Target users
+6. Agentic AI architecture
+7. Core product features
+8. One-minute demo narrative
+9. Expected business impact
+10. Competitive differentiation
+11. Roadmap and integrations
+12. Success metrics
+13. Project positioning
+14. Call to action
+
+The original nine-slide structure must remain available as a template:
+
+1. Cover
+2. The Problem
+3. The Solution
+4. How It Works
+5. Built for Cross-Functional Product Teams
+6. One-Minute Demo Narrative
+7. Expected Business Impact
+8. Roadmap and Next Steps
+9. Searchability and Project Positioning
+
+PowerPoint requirements:
+
+- Generate a genuine editable PPTX file.
+- Use a 16:9 widescreen layout.
+- Preserve text as editable text.
+- Preserve diagrams as editable shapes whenever practical.
+- Keep images in the correct aspect ratio.
+- Use high-resolution images.
+- Do not stretch or distort images.
+- Create consistent slide masters.
+- Include page numbers.
+- Include speaker notes where requested.
+- Include optional source references.
+- Include meaningful alt text where supported.
+- Prevent text clipping and element overlap.
+- Export a PDF version.
+- Generate preview thumbnails inside the application.
+- Allow users to regenerate one slide without regenerating the full presentation.
+- Allow users to edit slide titles, content, images, and layout.
+- Allow users to reorder, duplicate, hide, or delete slides.
+
+Recommended presentation visual direction:
+
+- Premium AI and digital-product aesthetic
+- Dark navy background for major slides
+- Clean light-background slides for analytical content
+- Cyan, teal, green, purple, and orange accents
+- Clear typography hierarchy
+- Rounded cards
+- Thin divider lines
+- Minimal visual noise
+- Generous spacing
+- Modern diagrams
+- Strong executive readability
+
+Extract the exact visual styling from the attached pitch deck where possible.
+
+M. Collaboration and Approvals
+
+Include:
+
+- Comments
+- Mentions
+- Assignments
+- Approval requests
+- Activity log
+- Version comparison
+- Change history
+- Notifications
+- Locked approved sections
+
+N. Integrations
+
+Design the architecture for:
+
+- Figma
+- Google Drive
+- ClickUp
+- Trello
+- Jira
+- Notion
+- Slack
+- Microsoft Teams
+- Google Analytics
+- Search Console
+- Content-management systems
+- Email
+- Webhooks
+- CSV import and export
+
+Initial integrations should prioritize:
+
+1. Figma
+2. Google Drive
+3. ClickUp or Trello
+4. Content-management systems
+
+O. Analytics and Business Impact
+
+Track:
+
+- Time from upload to first insight
+- Research-to-decision time
+- Number of accepted recommendations
+- Number of rejected recommendations
+- Tasks generated
+- Tasks exported
+- Rework avoided
+- Missing requirements detected
+- Presentation-generation time
+- Team engagement
+- Approval turnaround
+- Estimated time saved
+
+Clearly mark estimated values as estimates.
+
+==================================================
+8. INFORMATION ARCHITECTURE
+==================================================
+
+Public website:
+
+- Home
+- Product
+- Features
+- How It Works
+- Use Cases
+- Demo
+- Pricing
+- About the Project
+- Samer Tallauze Portfolio
+- Sign In
+- Start Free
+
+Authenticated application:
+
+- Dashboard
+- Projects
+- Project Overview
+- Inputs
+- Research
+- Problems
+- UX Strategy
+- Personas and Jobs-to-Be-Done
+- Journeys
+- User Flows
+- Information Architecture
+- Features
+- Wireframes
+- Content and SEO
+- Tasks
+- Presentations
+- Reports
+- Integrations
+- Team
+- Notifications
+- Settings
+
+Project-level navigation should communicate progress from input to execution.
+
+Suggested project navigation:
+
+1. Context
+2. Analyze
+3. Define
+4. Design
+5. Prioritize
+6. Execute
+7. Present
+8. Measure
+
+==================================================
+9. MAIN USER FLOW
+==================================================
+
+Primary flow:
+
+1. User creates an account.
+2. User creates a workspace.
+3. User starts a new project.
+4. User enters business and user objectives.
+5. User uploads files, notes, images, URLs, and design references.
+6. The Context Agent organizes the material.
+7. The system displays missing information.
+8. User confirms or edits the project brief.
+9. Research agents analyze the material.
+10. User reviews evidence-linked insights.
+11. User approves problem statements.
+12. UX agents generate journeys, flows, priorities, and recommendations.
+13. User edits and approves the outputs.
+14. The Task Agent converts approved outputs into team work.
+15. User exports tasks to a project-management tool.
+16. The Presentation Agent generates a professional PowerPoint.
+17. User reviews, edits, and downloads the PPTX or PDF.
+18. The system measures adoption, approvals, and estimated time saved.
+
+==================================================
+10. PROJECT-SPECIFIC DEMO DATA
+==================================================
+
+Preload a demonstration project titled:
+
+AI-Powered UX Workflow Automation for Smarter Digital Product Design
+
+Project summary:
+
+A practical agentic AI assistant that converts scattered UX inputs into clear insights, user flows, feature priorities, wireframe directions, and team-ready execution tasks.
+
+Problem:
+
+Manual UX and product-design work is frequently slow, repetitive, and distributed across disconnected tools.
+
+Solution:
+
+The AI workflow analyzes user needs, business goals, content, research, and existing design material. It summarizes the key problems, suggests UX improvements, creates user flows, prioritizes features, and converts the approved outputs into clear team tasks.
+
+Target users:
+
+- UX/UI designers
+- Product managers
+- Developers
+- Content teams
+- Marketing teams
+- Business leaders
+
+Primary stages:
+
+01 Research
+User feedback, notes, and goals
+
+02 AI Analysis
+Patterns, gaps, needs, and opportunities
+
+03 UX Outputs
+Journeys, feature priorities, wireframes, and content recommendations
+
+04 Execution
+Design tasks, development tickets, marketing actions, and review points
+
+Expected impact:
+
+- Faster research-to-decision cycle
+- Clearer UX and product requirements
+- Less manual planning and rework
+- Better team alignment and execution
+
+Roadmap:
+
+Phase 1: Prototype
+Refine AI prompts, UX logic, and output templates.
+
+Phase 2: Integrations
+Connect Figma, Google Drive, ClickUp or Trello, and content systems.
+
+Phase 3: Industry Packs
+Adapt the system for LMS, SaaS, e-commerce, marketing, and enterprise teams.
+
+Phase 4: Analytics
+Measure time saved, task clarity, rework reduction, adoption, and business impact.
+
+Positioning statement:
+
+“A practical agentic AI workflow for product teams that turns scattered UX research and business goals into clear design execution.”
+
+Keywords:
+
+- AI UX automation
+- AI product design assistant
+- Agentic AI workflow
+- UX research automation
+- AI user journey mapping
+- AI wireframe generator
+- Product management AI tool
+- UX/UI design automation
+- AI task-generation tool
+- Digital product strategy AI
+
+==================================================
+11. ONE-MINUTE DEMO EXPERIENCE
+==================================================
+
+Create an interactive demo that follows this narrative.
+
+0–10 seconds: Messy inputs
+
+Display scattered:
+
+- Research notes
+- Figma screens
+- Stakeholder messages
+- Business goals
+- Content files
+- Project tasks
+
+10–20 seconds: Upload context
+
+The user adds:
+
+- Project files
+- Notes
+- Goals
+- Screenshots
+- Content
+- Design references
+
+20–30 seconds: AI synthesis
+
+Animate the system identifying:
+
+- Pain points
+- User needs
+- Content gaps
+- Constraints
+- Risks
+- Opportunities
+
+30–40 seconds: Generate UX assets
+
+Show the generation of:
+
+- User journey
+- User flow
+- Feature-priority list
+- Wireframe directions
+- Content recommendations
+
+40–50 seconds: Team alignment
+
+Show:
+
+- Designer reviewing the journey
+- Product manager approving priorities
+- Developer receiving tickets
+- Marketer reviewing content actions
+
+50–60 seconds: Final impact
+
+End with:
+
+“From scattered ideas to clear UX execution—faster, smarter, aligned.”
+
+Include a “Try the Demo” button on the public website.
+
+==================================================
+12. VISUAL DESIGN SYSTEM
+==================================================
+
+Create a modern, credible AI-product interface.
+
+The visual language should communicate:
+
+- Intelligence
+- Structure
+- Trust
+- Speed
+- Collaboration
+- Professional product design
+
+Brand direction:
+
+- Dark navy primary backgrounds
+- White and soft-gray analytical surfaces
+- Cyan primary accent
+- Teal success accent
+- Purple AI-processing accent
+- Orange priority accent
+- Green approved-state accent
+- Red risk or rejected-state accent
+
+Use the attached presentation as the visual reference for:
+
+- Color balance
+- Dark and light slide alternation
+- Card styling
+- Accent lines
+- Typography hierarchy
+- Diagram treatment
+- Spacing
+- Minimal aesthetic
+
+Interface requirements:
+
+- Responsive
+- Mobile-friendly
+- Tablet-friendly
+- Accessible
+- Keyboard navigable
+- Clear focus states
+- High contrast
+- Reduced-motion support
+- Consistent empty states
+- Useful loading states
+- Helpful error states
+- Skeleton states during AI processing
+
+Avoid:
+
+- Excessive gradients
+- Overly decorative glass effects
+- Tiny text
+- Dense dashboards
+- Generic robot illustrations
+- Unnecessary animations
+- Fake charts
+- Unsupported business-impact claims
+
+==================================================
+13. RECOMMENDED PUBLIC HOMEPAGE
+==================================================
+
+Hero headline:
+
+“From Scattered UX Inputs to Clear Product Execution.”
+
+Hero supporting text:
+
+“An agentic AI workspace that analyzes research, business goals, content, and design material—then generates UX insights, user flows, feature priorities, actionable tasks, and professional presentations.”
+
+Primary CTA:
+
+“Start a UX Project”
+
+Secondary CTA:
+
+“View the 1-Minute Demo”
+
+Trust statement:
+
+“Built for designers, product managers, developers, marketers, and business leaders.”
+
+Homepage sections:
+
+1. Hero
+2. The product problem
+3. Four-step workflow
+4. Core AI agents
+5. UX outputs
+6. Team use cases
+7. Interactive demo
+8. PowerPoint-generation feature
+9. Integrations
+10. Expected business impact
+11. Roadmap
+12. About Samer Tallauze
+13. Final call to action
+
+==================================================
+14. DATA MODEL
+==================================================
+
+Create a scalable relational data model containing:
+
+User
+Organization
+Workspace
+WorkspaceMember
+Project
+ProjectMember
+ProjectSource
+SourceFile
+SourceURL
+SourceChunk
+ResearchInsight
+EvidenceReference
+ProblemStatement
+UserSegment
+Persona
+JobToBeDone
+Journey
+JourneyStage
+UserFlow
+FlowNode
+FlowConnection
+Feature
+FeatureScore
+RoadmapPhase
+Recommendation
+WireframeConcept
+ContentRecommendation
+SEOSuggestion
+Task
+TaskDependency
+Presentation
+PresentationSlide
+PresentationAsset
+Comment
+Approval
+ActivityLog
+Integration
+Export
+AIExecution
+AgentOutput
+OutputVersion
+Notification
+
+Each AI-generated object should contain:
+
+- ID
+- Project ID
+- Agent type
+- Output type
+- Generated content
+- Structured data
+- Source references
+- Confidence
+- Status
+- Version
+- Created by
+- Created date
+- Updated date
+- Approval status
+
+==================================================
+15. AI OUTPUT STANDARDS
+==================================================
+
+Every major recommendation must include:
+
+- Recommendation
+- User problem addressed
+- Business goal supported
+- Evidence
+- Expected impact
+- Effort
+- Risk
+- Confidence
+- Dependencies
+- Recommended owner
+- Suggested next action
+
+Every generated task must include:
+
+- Clear title
+- Context
+- User story
+- Business rationale
+- Functional requirement
+- Acceptance criteria
+- Edge cases
+- Accessibility considerations
+- Responsive behavior
+- Dependencies
+- Source evidence
+- Definition of done
+
+Do not return vague recommendations such as:
+
+- “Improve the user experience”
+- “Make the interface intuitive”
+- “Use modern design”
+- “Optimize the content”
+
+Replace generic recommendations with specific, measurable actions.
+
+==================================================
+16. TECHNICAL IMPLEMENTATION
+==================================================
+
+Use a maintainable, modular architecture.
+
+Recommended frontend:
+
+- React-based framework
+- TypeScript
+- Component-based design system
+- Utility-first CSS
+- Accessible UI components
+- Diagram or node-flow library
+- Responsive charting library
+- Drag-and-drop support
+
+Recommended backend:
+
+- Secure server-side API layer
+- PostgreSQL database
+- Object storage
+- Background job queue
+- Vector search for project sources
+- Document-processing service
+- AI orchestration layer
+- Presentation-generation service
+- Audit logs
+
+Recommended services:
+
+- Authentication provider
+- Relational database
+- File storage
+- AI model provider
+- Embedding model
+- OCR fallback
+- Document parsers
+- PPTX-generation engine
+- PDF renderer
+- Email notifications
+
+Use structured outputs or validated JSON schemas for all AI agents.
+
+Do not depend on free-form AI text for critical application logic.
+
+Implement:
+
+- Retries
+- Timeouts
+- Processing status
+- Error recovery
+- Rate limits
+- Token or usage tracking
+- File-size restrictions
+- File-type validation
+- Secure storage
+- Signed file URLs
+- Background processing
+- Output caching
+- Version control
+
+==================================================
+17. SECURITY AND TRUST
+==================================================
+
+Include:
+
+- Secure authentication
+- Role-based access
+- Workspace data isolation
+- Encrypted data in transit
+- Secure file access
+- File validation
+- Malware-scanning integration point
+- Audit logging
+- Export controls
+- Delete-project functionality
+- Delete-account functionality
+- Data-retention settings
+- AI-processing disclosure
+- Sensitive-data warnings
+
+Never expose one organization’s project content to another organization.
+
+Do not use customer content to improve shared models without explicit permission.
+
+==================================================
+18. MVP SCOPE
+==================================================
+
+Build the first usable release with:
+
+1. Authentication
+2. Workspace setup
+3. Project creation
+4. File and URL uploads
+5. Project-context extraction
+6. Research synthesis
+7. Problem statements
+8. UX recommendations
+9. User-journey generation
+10. Feature prioritization
+11. Task generation
+12. Professional PPTX generation
+13. Project history
+14. Human approval states
+15. Export to CSV and JSON
+16. One project-management integration
+17. Responsive interface
+18. Demonstration project using Samer’s AI UX workflow
+
+Do not delay the MVP by building advanced billing, enterprise administration, or a complete Figma editor.
+
+==================================================
+19. FUTURE FEATURES
+==================================================
+
+Prepare the architecture for:
+
+- Figma plugin
+- Automatic Figma frame analysis
+- Screenshot-based UX audits
+- Live website UX audits
+- Session-replay analysis
+- Analytics interpretation
+- Accessibility scanning
+- Design-system analysis
+- Component recommendations
+- Automatic usability-test scripts
+- Synthetic persona review
+- Voice-based project input
+- Multilingual projects
+- Arabic and RTL support
+- Industry-specific templates
+- LMS template pack
+- SaaS template pack
+- E-commerce template pack
+- Marketing campaign pack
+- Enterprise governance
+- White labeling
+- API access
+- Custom AI agents
+- Private model deployment
+
+==================================================
+20. ACCEPTANCE CRITERIA
+==================================================
+
+The build is successful only when:
+
+- A user can create an account and workspace.
+- A user can create a project.
+- A user can upload multiple project files and add URLs.
+- The system can process and classify the sources.
+- The system can generate a structured project brief.
+- The system can generate evidence-linked research insights.
+- The system can generate specific problem statements.
+- The system can generate UX recommendations.
+- The system can generate an editable user journey.
+- The system can generate a prioritized feature backlog.
+- The system can generate detailed team tasks.
+- The user can approve, reject, edit, and regenerate outputs.
+- The user can view version history.
+- The user can generate a professional presentation.
+- The presentation is downloadable as a real PPTX.
+- The PPTX contains editable text and structured layouts.
+- The user can regenerate individual slides.
+- The application works on desktop, tablet, and mobile.
+- The demo project is available immediately after onboarding.
+- No page is a non-functional placeholder.
+- Empty states and errors are handled properly.
+- AI-generated assumptions are clearly labeled.
+- Recommendations include evidence or an explicit low-confidence warning.
+
+==================================================
+21. REQUIRED FINAL DELIVERABLES
+==================================================
+
+Produce:
+
+1. Product architecture
+2. Information architecture
+3. Database schema
+4. Agent orchestration diagram
+5. Complete responsive web application
+6. Public marketing website
+7. Authenticated product dashboard
+8. Project-creation workflow
+9. Source-processing workflow
+10. AI analysis experience
+11. Journey builder
+12. Feature-prioritization board
+13. Task generator
+14. Presentation generator
+15. PPTX and PDF export
+16. Demo project
+17. Seed data
+18. API documentation
+19. Setup instructions
+20. Environment-variable template
+21. Deployment instructions
+22. Testing checklist
+
+==================================================
+22. BUILD QUALITY REQUIREMENTS
+==================================================
+
+Create a real working product, not only UI screens.
+
+Use reusable components and clean code.
+
+Do not:
+
+- Add non-working buttons
+- Use placeholder charts
+- Produce fake integrations without labeling them
+- Hide AI errors
+- Make unsupported performance claims
+- Generate inaccessible layouts
+- Overload screens with information
+- Present assumptions as research findings
+
+Start by defining:
+
+1. Product architecture
+2. Agent architecture
+3. Database model
+4. Application routes
+5. MVP implementation plan
+
+Then build the application in logical phases.
+
+Use the project’s own workflow as the initial demonstration case and generate its professional PowerPoint presentation from the information and images extracted from the official portfolio and attached pitch deck.
