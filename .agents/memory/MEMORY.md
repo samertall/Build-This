@@ -1,0 +1,1 @@
+- [Design subagent full-app redesign](design-subagent-redesign.md) — split redesign into foundation pass + parallel page batches; watch for hardcoded legacy colors surviving in individual pages.

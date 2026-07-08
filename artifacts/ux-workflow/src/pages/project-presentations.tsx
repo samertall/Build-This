@@ -1,7 +1,7 @@
 import { useParams } from "wouter";
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Presentation, Plus, Loader2, Layers, ChevronDown, ChevronUp } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Presentation, Plus, Loader2, Layers, ChevronDown, ChevronUp, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { DashboardLayout } from "@/layouts/dashboard-layout";
 import { useListPresentations, useGeneratePresentation, getListPresentationsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -20,29 +20,49 @@ const audienceTypes = ["stakeholders", "developers", "designers", "executives", 
 
 type Slide = { id: number; title: string; layout: string; content: Record<string, unknown> };
 
-function SlidePreview({ slide }: { slide: Slide }) {
+function SlidePreview({ slide, index }: { slide: Slide; index: number }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <div className="border border-border rounded-lg overflow-hidden">
+    <motion.div 
+      initial={{ opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+      className="border border-border rounded-lg overflow-hidden group bg-card"
+    >
       <button
-        className="w-full flex items-center justify-between p-3 bg-muted/30 hover:bg-muted/50 transition-colors text-left"
+        className="w-full flex items-center justify-between p-3.5 hover:bg-muted/30 transition-colors text-left"
         onClick={() => setExpanded(e => !e)}
       >
-        <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-md bg-cyan-400/10 flex items-center justify-center text-xs font-bold text-cyan-400">{slide.id}</div>
-          <span className="font-medium text-foreground text-sm">{slide.title}</span>
-          <Badge variant="outline" className="text-xs border-border text-muted-foreground">{slide.layout}</Badge>
+        <div className="flex items-center gap-4">
+          <div className="w-8 h-8 rounded-md bg-secondary flex items-center justify-center text-xs font-mono font-bold text-secondary-foreground shadow-sm">
+            {slide.id}
+          </div>
+          <div>
+            <div className="font-semibold text-foreground text-sm leading-none mb-1.5">{slide.title}</div>
+            <Badge variant="outline" className="text-[10px] font-mono border-border text-muted-foreground uppercase tracking-wider">{slide.layout}</Badge>
+          </div>
         </div>
-        {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+        <div className="w-8 h-8 flex items-center justify-center rounded-full group-hover:bg-background transition-colors">
+          {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+        </div>
       </button>
-      {expanded && (
-        <div className="p-3 bg-card">
-          <pre className="text-xs text-muted-foreground whitespace-pre-wrap overflow-auto max-h-48">
-            {JSON.stringify(slide.content, null, 2)}
-          </pre>
-        </div>
-      )}
-    </div>
+      <AnimatePresence>
+        {expanded && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="p-4 border-t border-border bg-muted/10">
+              <pre className="text-xs font-mono text-muted-foreground whitespace-pre-wrap overflow-auto max-h-64 p-3 bg-background rounded-md border border-border/50 shadow-inner">
+                {JSON.stringify(slide.content, null, 2)}
+              </pre>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 
@@ -69,7 +89,7 @@ export default function ProjectPresentationsPage() {
   const handleGenerate = () => {
     generate.mutate(
       {
-        projectId,
+        id: projectId,
         data: {
           title: form.title,
           presentationType: form.presentationType,
@@ -81,6 +101,7 @@ export default function ProjectPresentationsPage() {
         onSuccess: () => {
           void qc.invalidateQueries({ queryKey: getListPresentationsQueryKey(projectId) });
           setOpen(false);
+          setForm({ title: "", presentationType: "project-pitch", audience: "stakeholders", slideCount: "9" });
           toast({ title: "Presentation generated", description: "Your slide deck is ready to preview." });
         },
         onError: () => toast({ title: "Error", description: "Failed to generate presentation.", variant: "destructive" }),
@@ -90,55 +111,62 @@ export default function ProjectPresentationsPage() {
 
   return (
     <DashboardLayout projectId={projectId}>
-      <div className="p-6 md:p-8 max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+      <div className="p-6 md:p-8 max-w-5xl mx-auto w-full">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Presentations</h1>
-            <p className="text-muted-foreground text-sm mt-1">Generate stakeholder-ready slide decks from your approved project outputs.</p>
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">Presentations</h1>
+            <p className="text-muted-foreground text-sm mt-2 max-w-xl leading-relaxed">
+              Generate stakeholder-ready slide decks from your approved project outputs.
+            </p>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-cyan-500 hover:bg-cyan-400 text-[hsl(222,47%,8%)] font-semibold">
-                <Plus className="w-4 h-4 mr-2" />Generate
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm h-10 px-5">
+                <Plus className="w-4 h-4 mr-2" />Generate Deck
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md bg-card border-border">
+            <DialogContent className="sm:max-w-md bg-card border-border shadow-xl">
               <DialogHeader>
-                <DialogTitle className="text-foreground">Generate Presentation</DialogTitle>
+                <DialogTitle className="text-xl text-foreground font-bold tracking-tight">Generate Presentation</DialogTitle>
+                <DialogDescription>Configure the focus and audience for your slide deck.</DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 mt-2">
+              <div className="space-y-5 mt-4">
                 <div>
-                  <Label className="mb-2 block text-foreground">Title <span className="text-destructive">*</span></Label>
-                  <Input value={form.title} onChange={e => up("title", e.target.value)} placeholder="e.g. Q3 UX Strategy Review" className="bg-input border-border" />
+                  <Label className="mb-2 block text-sm font-semibold text-foreground">Title <span className="text-destructive">*</span></Label>
+                  <Input value={form.title} onChange={e => up("title", e.target.value)} placeholder="e.g. Q3 UX Strategy Review" className="bg-background border-border h-10" />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="mb-2 block text-foreground">Type</Label>
+                    <Label className="mb-2 block text-sm font-semibold text-foreground">Type</Label>
                     <Select value={form.presentationType} onValueChange={v => up("presentationType", v)}>
-                      <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
-                      <SelectContent>{presentationTypes.map(t => <SelectItem key={t} value={t}>{t.replace(/-/g, " ")}</SelectItem>)}</SelectContent>
+                      <SelectTrigger className="bg-background border-border h-10"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {presentationTypes.map(t => <SelectItem key={t} value={t} className="capitalize">{t.replace(/-/g, " ")}</SelectItem>)}
+                      </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label className="mb-2 block text-foreground">Audience</Label>
+                    <Label className="mb-2 block text-sm font-semibold text-foreground">Audience</Label>
                     <Select value={form.audience} onValueChange={v => up("audience", v)}>
-                      <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
-                      <SelectContent>{audienceTypes.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
+                      <SelectTrigger className="bg-background border-border h-10"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {audienceTypes.map(a => <SelectItem key={a} value={a} className="capitalize">{a}</SelectItem>)}
+                      </SelectContent>
                     </Select>
                   </div>
                 </div>
                 <div>
-                  <Label className="mb-2 block text-foreground">Number of slides (max 10)</Label>
+                  <Label className="mb-2 block text-sm font-semibold text-foreground">Number of slides</Label>
                   <Select value={form.slideCount} onValueChange={v => up("slideCount", v)}>
-                    <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="bg-background border-border h-10"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {[5,6,7,8,9,10].map(n => <SelectItem key={n} value={String(n)}>{n} slides</SelectItem>)}
+                      {[5,6,7,8,9,10].map(n => <SelectItem key={n} value={String(n)}>{n} slides max</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex justify-end gap-3 pt-2">
-                  <Button variant="outline" onClick={() => setOpen(false)} className="border-border">Cancel</Button>
-                  <Button onClick={handleGenerate} disabled={!form.title.trim() || generate.isPending} className="bg-cyan-500 hover:bg-cyan-400 text-[hsl(222,47%,8%)] font-semibold">
+                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-2">
+                  <Button variant="ghost" onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">Cancel</Button>
+                  <Button onClick={handleGenerate} disabled={!form.title.trim() || generate.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 shadow-sm">
                     {generate.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating...</> : "Generate"}
                   </Button>
                 </div>
@@ -148,61 +176,94 @@ export default function ProjectPresentationsPage() {
         </div>
 
         {isLoading ? (
-          <div className="space-y-4">{[1,2].map(i => <Skeleton key={i} className="h-48 rounded-xl" />)}</div>
-        ) : !presentations || presentations.length === 0 ? (
-          <Card className="border-dashed border-border bg-card/30">
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-pink-400/10 flex items-center justify-center mb-4">
-                <Presentation className="w-5 h-5 text-pink-400" />
+          <div className="space-y-6">
+            {[1, 2].map(i => (
+              <div key={i} className="flex gap-4 items-start">
+                <Skeleton className="h-16 w-16 rounded-xl shrink-0" />
+                <div className="space-y-3 flex-1">
+                  <Skeleton className="h-6 w-1/3" />
+                  <Skeleton className="h-4 w-1/4" />
+                </div>
               </div>
-              <h3 className="font-semibold text-foreground mb-2">No presentations yet</h3>
-              <p className="text-muted-foreground text-sm mb-4 max-w-xs">Generate a slide deck from your approved insights, problems, recommendations, and features.</p>
-              <Button onClick={() => setOpen(true)} className="bg-cyan-500 hover:bg-cyan-400 text-[hsl(222,47%,8%)] font-semibold">
-                <Plus className="w-4 h-4 mr-2" />Generate First Presentation
-              </Button>
-            </CardContent>
-          </Card>
+            ))}
+          </div>
+        ) : !presentations || presentations.length === 0 ? (
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+            <Card className="border-dashed border-border bg-muted/30 shadow-none max-w-3xl mx-auto">
+              <CardContent className="flex flex-col items-center justify-center py-24 text-center">
+                <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center mb-6 shadow-sm">
+                  <Presentation className="w-10 h-10 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold text-foreground mb-3 tracking-tight">No presentations yet</h3>
+                <p className="text-muted-foreground text-sm mb-8 max-w-sm leading-relaxed">
+                  Generate a slide deck summarizing your approved insights, problems, recommendations, and features.
+                </p>
+                <Button onClick={() => setOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md px-6 h-11">
+                  <Plus className="w-4 h-4 mr-2" />Generate First Presentation
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {presentations.map((pres, i) => {
-              const slides = (pres.slides as Slide[]) ?? [];
+              const slides = (pres.slides as unknown as Slide[]) ?? [];
               const isExp = expandedId === pres.id;
               return (
-                <motion.div key={pres.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
-                  <Card className="border-border bg-card">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between gap-3">
+                <motion.div key={pres.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1, duration: 0.4 }}>
+                  <Card className={`border-border bg-card overflow-hidden transition-all duration-300 ${isExp ? 'shadow-md ring-1 ring-primary/20' : 'shadow-sm hover:shadow-md'}`}>
+                    <div 
+                      className="p-5 sm:p-6 cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                      onClick={() => setExpandedId(isExp ? null : pres.id)}
+                    >
+                      <div className="flex items-start gap-5">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-colors ${isExp ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'}`}>
+                          <FileText className="w-6 h-6" />
+                        </div>
                         <div>
-                          <CardTitle className="text-base font-semibold text-foreground">{pres.title}</CardTitle>
-                          <div className="flex gap-2 mt-2 flex-wrap">
+                          <h3 className="text-lg font-bold text-foreground tracking-tight mb-2 group-hover:text-primary transition-colors">{pres.title}</h3>
+                          <div className="flex gap-2 flex-wrap items-center">
                             {pres.presentationType && (
-                              <Badge variant="outline" className="border-border text-muted-foreground text-xs capitalize">{pres.presentationType?.replace(/-/g, " ")}</Badge>
+                              <Badge variant="secondary" className="font-mono text-[10px] uppercase tracking-wider capitalize text-secondary-foreground">{pres.presentationType?.replace(/-/g, " ")}</Badge>
                             )}
                             {pres.audience && (
-                              <Badge variant="outline" className="border-border text-muted-foreground text-xs capitalize">{pres.audience}</Badge>
+                              <Badge variant="secondary" className="font-mono text-[10px] uppercase tracking-wider capitalize text-secondary-foreground">{pres.audience}</Badge>
                             )}
-                            <Badge className="bg-green-400/15 text-green-400 border-green-400/20 text-xs">
+                            <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-0 font-mono text-[10px] uppercase tracking-wider ml-1">
                               {pres.slideCount} slides
                             </Badge>
                           </div>
                         </div>
-                        <Button
-                          variant="outline" size="sm"
-                          onClick={() => setExpandedId(isExp ? null : pres.id)}
-                          className="border-border text-muted-foreground hover:text-foreground flex-shrink-0"
-                        >
-                          <Layers className="w-3.5 h-3.5 mr-1.5" />
-                          {isExp ? "Hide" : "View"} slides
-                        </Button>
                       </div>
-                    </CardHeader>
-                    {isExp && (
-                      <CardContent className="pt-0">
-                        <div className="space-y-2 mt-2">
-                          {slides.map(slide => <SlidePreview key={slide.id} slide={slide} />)}
-                        </div>
-                      </CardContent>
-                    )}
+                      
+                      <Button
+                        variant={isExp ? "default" : "outline"}
+                        className={`shrink-0 transition-all ${isExp ? "bg-primary text-primary-foreground shadow-sm" : "bg-transparent border-border"}`}
+                        onClick={(e) => { e.stopPropagation(); setExpandedId(isExp ? null : pres.id); }}
+                      >
+                        <Layers className="w-4 h-4 mr-2" />
+                        {isExp ? "Close Deck" : "View Slides"}
+                      </Button>
+                    </div>
+                    
+                    <AnimatePresence>
+                      {isExp && (
+                        <motion.div 
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="border-t border-border bg-muted/20"
+                        >
+                          <div className="p-5 sm:p-6 space-y-3">
+                            <h4 className="text-sm font-semibold text-foreground mb-4 tracking-tight flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>
+                              Slide Content Preview
+                            </h4>
+                            {slides.map((slide, sIdx) => <SlidePreview key={slide.id} slide={slide} index={sIdx} />)}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </Card>
                 </motion.div>
               );

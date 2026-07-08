@@ -44,8 +44,14 @@ export default function NewProjectPage() {
   };
 
   const handleSubmit = () => {
+    const extraContext = [
+      form.constraints ? `Constraints & Limitations: ${form.constraints}` : "",
+      form.additionalContext ? `Additional Context: ${form.additionalContext}` : "",
+    ].filter(Boolean).join("\n\n");
+    const combinedDescription = [form.description, extraContext].filter(Boolean).join("\n\n");
+
     createProject.mutate(
-      { data: { name: form.name, description: form.description || undefined, productType: form.productType || undefined, industry: form.industry || undefined, stage: form.stage || undefined, businessGoals: form.businessGoals || undefined, targetUsers: form.targetUsers || undefined, additionalContext: form.additionalContext || undefined } },
+      { data: { name: form.name, description: combinedDescription || undefined, productType: form.productType || undefined, industry: form.industry || undefined, stage: form.stage || undefined, businessGoals: form.businessGoals || undefined, targetUsers: form.targetUsers || undefined } },
       {
         onSuccess: (project: { id: number }) => {
           toast({ title: "Project created", description: "Your project is ready. Start by adding sources." });
@@ -60,107 +66,107 @@ export default function NewProjectPage() {
 
   const stepContent = [
     // Step 0: Basics
-    <div className="space-y-5">
+    <div key="step0" className="space-y-6">
       <div>
-        <Label className="text-foreground mb-2 block">Project Name <span className="text-destructive">*</span></Label>
+        <Label className="text-foreground mb-2 block font-medium">Project Name <span className="text-destructive">*</span></Label>
         <Input
           placeholder="e.g. Redesign of checkout flow for mobile app"
           value={form.name}
           onChange={e => update("name", e.target.value)}
-          className="bg-input border-border focus-visible:ring-primary"
+          className="bg-background border-border focus-visible:ring-primary shadow-sm"
         />
       </div>
       <div>
-        <Label className="text-foreground mb-2 block">Description</Label>
+        <Label className="text-foreground mb-2 block font-medium">Description</Label>
         <Textarea
           placeholder="Brief overview of the project scope and context"
           value={form.description}
           onChange={e => update("description", e.target.value)}
           rows={3}
-          className="bg-input border-border focus-visible:ring-primary resize-none"
+          className="bg-background border-border focus-visible:ring-primary resize-none shadow-sm"
         />
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-5">
         <div>
-          <Label className="text-foreground mb-2 block">Product Type</Label>
+          <Label className="text-foreground mb-2 block font-medium">Product Type</Label>
           <Select value={form.productType} onValueChange={v => update("productType", v)}>
-            <SelectTrigger className="bg-input border-border"><SelectValue placeholder="Select type" /></SelectTrigger>
+            <SelectTrigger className="bg-background border-border shadow-sm"><SelectValue placeholder="Select type" /></SelectTrigger>
             <SelectContent>{productTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
           </Select>
         </div>
         <div>
-          <Label className="text-foreground mb-2 block">Industry</Label>
+          <Label className="text-foreground mb-2 block font-medium">Industry</Label>
           <Select value={form.industry} onValueChange={v => update("industry", v)}>
-            <SelectTrigger className="bg-input border-border"><SelectValue placeholder="Select industry" /></SelectTrigger>
+            <SelectTrigger className="bg-background border-border shadow-sm"><SelectValue placeholder="Select industry" /></SelectTrigger>
             <SelectContent>{industries.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent>
           </Select>
         </div>
       </div>
       <div>
-        <Label className="text-foreground mb-2 block">Project Stage</Label>
+        <Label className="text-foreground mb-2 block font-medium">Project Stage</Label>
         <Select value={form.stage} onValueChange={v => update("stage", v)}>
-          <SelectTrigger className="bg-input border-border"><SelectValue placeholder="Select current stage" /></SelectTrigger>
+          <SelectTrigger className="bg-background border-border shadow-sm"><SelectValue placeholder="Select current stage" /></SelectTrigger>
           <SelectContent>{stages.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
         </Select>
       </div>
     </div>,
 
     // Step 1: Objectives
-    <div className="space-y-5">
+    <div key="step1" className="space-y-6">
       <div>
-        <Label className="text-foreground mb-2 block">Business Goals <span className="text-destructive">*</span></Label>
+        <Label className="text-foreground mb-2 block font-medium">Business Goals <span className="text-destructive">*</span></Label>
         <Textarea
           placeholder="What are the core business objectives? e.g. Increase checkout conversion by 15%, reduce cart abandonment, expand to mobile users..."
           value={form.businessGoals}
           onChange={e => update("businessGoals", e.target.value)}
-          rows={5}
-          className="bg-input border-border focus-visible:ring-primary resize-none"
+          rows={6}
+          className="bg-background border-border focus-visible:ring-primary resize-none shadow-sm text-base"
         />
-        <p className="text-muted-foreground text-xs mt-2">Be specific. Vague goals produce vague AI outputs.</p>
+        <p className="text-muted-foreground text-sm mt-2 font-medium bg-muted p-3 rounded-lg border border-border mt-3">💡 Be specific. Vague goals produce vague AI outputs.</p>
       </div>
     </div>,
 
     // Step 2: Audience
-    <div className="space-y-5">
+    <div key="step2" className="space-y-6">
       <div>
-        <Label className="text-foreground mb-2 block">Target Users</Label>
+        <Label className="text-foreground mb-2 block font-medium">Target Users</Label>
         <Textarea
           placeholder="Describe your primary users. Include demographics, behaviors, technical literacy, pain points, and any personas you already have..."
           value={form.targetUsers}
           onChange={e => update("targetUsers", e.target.value)}
-          rows={5}
-          className="bg-input border-border focus-visible:ring-primary resize-none"
+          rows={6}
+          className="bg-background border-border focus-visible:ring-primary resize-none shadow-sm text-base"
         />
       </div>
     </div>,
 
     // Step 3: Context
-    <div className="space-y-5">
+    <div key="step3" className="space-y-6">
       <div>
-        <Label className="text-foreground mb-2 block">Constraints & Limitations</Label>
+        <Label className="text-foreground mb-2 block font-medium">Constraints & Limitations</Label>
         <Textarea
           placeholder="Technical constraints, design system rules, regulatory requirements, timeline, budget, team size..."
           value={form.constraints}
           onChange={e => update("constraints", e.target.value)}
-          rows={3}
-          className="bg-input border-border focus-visible:ring-primary resize-none"
+          rows={4}
+          className="bg-background border-border focus-visible:ring-primary resize-none shadow-sm"
         />
       </div>
       <div>
-        <Label className="text-foreground mb-2 block">Additional Context</Label>
+        <Label className="text-foreground mb-2 block font-medium">Additional Context</Label>
         <Textarea
           placeholder="Anything else the AI agents should know — existing research, previous failed approaches, competitor context..."
           value={form.additionalContext}
           onChange={e => update("additionalContext", e.target.value)}
-          rows={3}
-          className="bg-input border-border focus-visible:ring-primary resize-none"
+          rows={4}
+          className="bg-background border-border focus-visible:ring-primary resize-none shadow-sm"
         />
       </div>
     </div>,
 
     // Step 4: Review
-    <div className="space-y-4">
-      <div className="rounded-xl border border-border bg-muted/30 p-5 space-y-3">
+    <div key="step4" className="space-y-6">
+      <div className="rounded-xl border border-border bg-card shadow-sm p-6 space-y-5">
         {[
           { label: "Project Name", value: form.name },
           { label: "Product Type", value: form.productType },
@@ -170,85 +176,88 @@ export default function NewProjectPage() {
           { label: "Target Users", value: form.targetUsers },
         ].map(({ label, value }) => value ? (
           <div key={label}>
-            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{label}</div>
-            <div className="text-foreground text-sm">{value}</div>
+            <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">{label}</div>
+            <div className="text-foreground text-sm font-medium">{value}</div>
           </div>
         ) : null)}
       </div>
-      <p className="text-muted-foreground text-sm">Once created, you'll add source materials (research notes, URLs, files) before running AI analysis.</p>
+      <div className="bg-primary/5 text-primary border border-primary/20 p-4 rounded-xl text-sm font-medium">
+        Almost done! Once created, you'll add source materials (research notes, URLs, files) before running AI analysis.
+      </div>
     </div>,
   ];
 
   return (
     <DashboardLayout>
-      <div className="p-6 md:p-8 max-w-2xl mx-auto">
+      <div className="p-6 md:p-8 max-w-2xl mx-auto w-full">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground mb-1">New Project</h1>
-          <p className="text-muted-foreground text-sm">Configure your project before adding sources and running AI analysis.</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2 tracking-tight">New Project</h1>
+          <p className="text-muted-foreground text-base">Configure your project before adding sources and running AI analysis.</p>
         </div>
 
         {/* Step indicators */}
-        <div className="flex items-center gap-1 mb-8">
+        <div className="flex items-center gap-2 mb-10">
           {steps.map((s, i) => (
-            <div key={s} className="flex items-center gap-1 flex-1">
+            <div key={s} className="flex items-center gap-2 flex-1">
               <button
                 onClick={() => i < step && setStep(i)}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-colors flex-shrink-0 ${
-                  i < step ? "bg-cyan-500 text-[hsl(222,47%,8%)] cursor-pointer" :
-                  i === step ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/40" :
-                  "bg-muted text-muted-foreground"
+                className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all flex-shrink-0 ${
+                  i < step ? "bg-primary text-primary-foreground cursor-pointer shadow-md hover:bg-primary/90" :
+                  i === step ? "bg-primary/10 text-primary border-2 border-primary ring-4 ring-primary/10" :
+                  "bg-muted text-muted-foreground border-2 border-border"
                 }`}
               >
-                {i < step ? <Check className="w-3.5 h-3.5" /> : i + 1}
+                {i < step ? <Check className="w-4 h-4" /> : i + 1}
               </button>
               {i < steps.length - 1 && (
-                <div className={`h-px flex-1 transition-colors ${i < step ? "bg-cyan-500/50" : "bg-border"}`} />
+                <div className={`h-1 flex-1 rounded-full transition-colors ${i < step ? "bg-primary/50" : "bg-border"}`} />
               )}
             </div>
           ))}
         </div>
 
-        <div className="mb-2">
-          <h2 className="text-lg font-semibold text-foreground">{steps[step]}</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-foreground">{steps[step]}</h2>
+          <span className="text-sm font-mono text-muted-foreground">Step {step + 1} of {steps.length}</span>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-6 mb-6">
+        <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 mb-8 shadow-sm">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: 15 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
+              exit={{ opacity: 0, x: -15 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
             >
               {stepContent[step]}
             </motion.div>
           </AnimatePresence>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pt-2">
           <Button
             variant="outline"
             onClick={() => setStep(s => s - 1)}
             disabled={step === 0}
-            className="border-border"
+            className="border-border font-medium shadow-sm w-32"
           >
-            <ChevronLeft className="w-4 h-4 mr-1" /> Back
+            <ChevronLeft className="w-4 h-4 mr-1.5" /> Back
           </Button>
 
           {step < steps.length - 1 ? (
             <Button
               onClick={() => setStep(s => s + 1)}
               disabled={!canNext()}
-              className="bg-cyan-500 hover:bg-cyan-400 text-[hsl(222,47%,8%)] font-semibold"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm w-32"
             >
-              Continue <ChevronRight className="w-4 h-4 ml-1" />
+              Continue <ChevronRight className="w-4 h-4 ml-1.5" />
             </Button>
           ) : (
             <Button
               onClick={handleSubmit}
               disabled={createProject.isPending}
-              className="bg-cyan-500 hover:bg-cyan-400 text-[hsl(222,47%,8%)] font-semibold"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm px-6"
             >
               {createProject.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating...</> : "Create Project"}
             </Button>

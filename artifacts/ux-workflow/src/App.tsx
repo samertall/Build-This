@@ -51,18 +51,17 @@ const clerkAppearance = {
   options: {
     logoPlacement: "inside" as const,
     logoLinkUrl: basePath || "/",
-    logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
   },
   variables: {
-    colorPrimary: "hsl(195 100% 40%)",
-    colorForeground: "hsl(222 84% 10%)",
-    colorMutedForeground: "hsl(220 9% 46%)",
+    colorPrimary: "hsl(10 90% 60%)",
+    colorForeground: "hsl(260 40% 15%)",
+    colorMutedForeground: "hsl(260 15% 45%)",
     colorDanger: "hsl(0 84% 60%)",
-    colorBackground: "hsl(0 0% 100%)",
-    colorInput: "hsl(220 14% 96%)",
-    colorInputForeground: "hsl(222 84% 10%)",
-    colorNeutral: "hsl(220 13% 91%)",
-    fontFamily: "'Space Grotesk', sans-serif",
+    colorBackground: "hsl(260 30% 99%)",
+    colorInput: "hsl(260 15% 88%)",
+    colorInputForeground: "hsl(260 40% 15%)",
+    colorNeutral: "hsl(260 15% 88%)",
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
     borderRadius: "0.5rem",
   },
   elements: {
@@ -70,7 +69,7 @@ const clerkAppearance = {
     cardBox: "bg-card rounded-2xl w-[440px] max-w-full overflow-hidden border border-border shadow-lg",
     card: "!shadow-none !border-0 !bg-transparent !rounded-none",
     footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
-    headerTitle: "text-foreground font-semibold tracking-tight text-xl",
+    headerTitle: "text-foreground font-semibold tracking-tight text-2xl",
     headerSubtitle: "text-muted-foreground",
     socialButtonsBlockButtonText: "text-foreground font-medium",
     formFieldLabel: "text-foreground font-medium text-sm",
@@ -175,9 +174,9 @@ function ClerkProviderWithRoutes() {
 }
 
 function App() {
-  // Set dark mode default
+  // Set light mode default
   useEffect(() => {
-    document.documentElement.classList.add('dark');
+    document.documentElement.classList.remove('dark');
   }, []);
 
   return (

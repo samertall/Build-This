@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { useUser, useClerk } from "@clerk/react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   LayoutDashboard, 
   FolderPlus, 
@@ -9,7 +9,15 @@ import {
   LogOut,
   FolderOpen,
   ChevronRight,
-  Menu
+  Menu,
+  Activity,
+  Lightbulb,
+  AlertCircle,
+  TrendingUp,
+  Map,
+  Layers,
+  CheckSquare,
+  Presentation as PresentationIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -39,23 +47,23 @@ export function DashboardLayout({ children, projectId }: DashboardLayoutProps) {
   ];
 
   const projectNavigation = projectId ? [
-    { name: "Overview", href: `/projects/${projectId}` },
-    { name: "Sources", href: `/projects/${projectId}/sources` },
-    { name: "Analysis", href: `/projects/${projectId}/analyze` },
-    { name: "Insights", href: `/projects/${projectId}/insights` },
-    { name: "Problems", href: `/projects/${projectId}/problems` },
-    { name: "Recommendations", href: `/projects/${projectId}/recommendations` },
-    { name: "Journeys", href: `/projects/${projectId}/journeys` },
-    { name: "Features", href: `/projects/${projectId}/features` },
-    { name: "Tasks", href: `/projects/${projectId}/tasks` },
-    { name: "Presentations", href: `/projects/${projectId}/presentations` },
+    { name: "Overview", href: `/projects/${projectId}`, icon: FolderOpen },
+    { name: "Sources", href: `/projects/${projectId}/sources`, icon: Layers },
+    { name: "Analysis", href: `/projects/${projectId}/analyze`, icon: Activity },
+    { name: "Insights", href: `/projects/${projectId}/insights`, icon: Lightbulb },
+    { name: "Problems", href: `/projects/${projectId}/problems`, icon: AlertCircle },
+    { name: "Recommendations", href: `/projects/${projectId}/recommendations`, icon: TrendingUp },
+    { name: "Journeys", href: `/projects/${projectId}/journeys`, icon: Map },
+    { name: "Features", href: `/projects/${projectId}/features`, icon: LayoutDashboard },
+    { name: "Tasks", href: `/projects/${projectId}/tasks`, icon: CheckSquare },
+    { name: "Presentations", href: `/projects/${projectId}/presentations`, icon: PresentationIcon },
   ] : [];
 
   const Sidebar = () => (
     <div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
-      <div className="flex h-16 shrink-0 items-center px-6">
-        <Link href="/dashboard" className="flex items-center gap-2 text-sidebar-primary">
-          <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground font-bold text-xl shadow-[0_0_15px_rgba(0,255,255,0.3)]">
+      <div className="flex h-16 shrink-0 items-center px-6 border-b border-sidebar-border/50">
+        <Link href="/dashboard" className="flex items-center gap-3 text-sidebar-primary">
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl shadow-[0_0_15px_rgba(255,87,34,0.3)]">
             u
           </div>
           <span className="text-xl font-bold tracking-tight text-white">uxflow</span>
@@ -63,17 +71,18 @@ export function DashboardLayout({ children, projectId }: DashboardLayoutProps) {
       </div>
       
       <div className="flex-1 overflow-auto py-4">
-        <nav className="grid gap-1 px-4">
+        <nav className="grid gap-1 px-3">
           {navigation.map((item) => {
             const isActive = location === item.href;
             return (
               <Link key={item.name} href={item.href}>
-                <span className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                <span className={`relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                   isActive 
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm" 
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    ? "bg-sidebar-accent text-white" 
+                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-white"
                 }`}>
-                  <item.icon className="h-4 w-4" />
+                  {isActive && <motion.div layoutId="nav-indicator" className="absolute left-0 w-1 h-5 bg-primary rounded-r-full" />}
+                  <item.icon className={`h-4 w-4 ${isActive ? 'text-primary' : 'opacity-70'}`} />
                   {item.name}
                 </span>
               </Link>
@@ -83,21 +92,21 @@ export function DashboardLayout({ children, projectId }: DashboardLayoutProps) {
 
         {projectId && (
           <div className="mt-8">
-            <div className="px-6 mb-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">
-              Project Workspace
+            <div className="px-6 mb-3 text-xs font-bold uppercase tracking-wider text-sidebar-foreground/50 font-mono">
+              Pipeline Workspace
             </div>
-            <nav className="grid gap-1 px-4">
+            <nav className="grid gap-1 px-3">
               {projectNavigation.map((item) => {
                 const isActive = location === item.href;
                 return (
                   <Link key={item.name} href={item.href}>
-                    <span className={`flex items-center gap-3 rounded-md px-3 py-1.5 text-sm transition-colors ${
+                    <span className={`relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-all duration-200 ${
                       isActive 
-                        ? "bg-sidebar-primary/10 text-sidebar-primary font-medium" 
-                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                        ? "bg-primary/10 text-primary font-semibold" 
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-white"
                     }`}>
-                      {isActive && <motion.div layoutId="sidebar-active" className="absolute left-0 w-1 h-5 bg-sidebar-primary rounded-r-full" />}
-                      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40 ml-1"></span>
+                      {isActive && <motion.div layoutId="project-nav-indicator" className="absolute left-0 w-1 h-full bg-primary rounded-r-full" />}
+                      <item.icon className={`h-4 w-4 ${isActive ? 'text-primary' : 'opacity-50'}`} />
                       {item.name}
                     </span>
                   </Link>
@@ -108,23 +117,24 @@ export function DashboardLayout({ children, projectId }: DashboardLayoutProps) {
         )}
       </div>
 
-      <div className="mt-auto p-4 border-t border-sidebar-border">
+      <div className="mt-auto p-4 border-t border-sidebar-border/50">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="w-full justify-start gap-2 px-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
-              <Avatar className="h-6 w-6">
+            <Button variant="ghost" className="w-full justify-start gap-3 px-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground h-12">
+              <Avatar className="h-8 w-8 border border-sidebar-border">
                 <AvatarImage src={user?.imageUrl} alt={user?.fullName || ""} />
-                <AvatarFallback>{user?.firstName?.charAt(0) || "U"}</AvatarFallback>
+                <AvatarFallback className="bg-primary/20 text-primary">{user?.firstName?.charAt(0) || "U"}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-start text-left flex-1 truncate">
-                <span className="text-sm font-medium truncate">{user?.fullName}</span>
+                <span className="text-sm font-semibold truncate text-white">{user?.fullName}</span>
+                <span className="text-xs text-sidebar-foreground/60 font-mono truncate">{user?.primaryEmailAddress?.emailAddress}</span>
               </div>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-56 font-sans">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut()}>
+            <DropdownMenuItem onClick={() => signOut()} className="text-destructive focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
             </DropdownMenuItem>
@@ -135,7 +145,7 @@ export function DashboardLayout({ children, projectId }: DashboardLayoutProps) {
   );
 
   return (
-    <div className="flex min-h-[100dvh] w-full flex-col bg-background">
+    <div className="flex min-h-[100dvh] w-full flex-col bg-background font-sans">
       {/* Desktop Sidebar */}
       <div className="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col z-50">
         <Sidebar />
@@ -156,19 +166,28 @@ export function DashboardLayout({ children, projectId }: DashboardLayoutProps) {
             </SheetContent>
           </Sheet>
           <div className="flex flex-1 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm shadow-[0_0_10px_rgba(255,87,34,0.3)]">
                 u
               </div>
-              <span className="font-bold">uxflow</span>
-            </div>
+              <span className="font-bold text-lg tracking-tight">uxflow</span>
+            </Link>
           </div>
         </header>
 
         {/* Main Content */}
-        <main className="flex-1">
-          {children}
-        </main>
+        <AnimatePresence mode="wait">
+          <motion.main 
+            key={location}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            className="flex-1 flex flex-col"
+          >
+            {children}
+          </motion.main>
+        </AnimatePresence>
       </div>
     </div>
   );
