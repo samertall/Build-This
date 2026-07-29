@@ -1,0 +1,38 @@
+I need you to update the entire platform branding from **UXFlow** to **Build-This**.
+
+Please make the following changes across the front end, back end, dashboard, and all related pages:
+
+1. Replace every mention of **UXFlow** with **Build-This**.
+2. Replace the logo everywhere with the attached Build-This logo, and make sure it is properly resized, aligned, and visually consistent across the platform.
+3. Update the main brand color theme to **#1893F7** and apply it consistently across buttons, links, icons, gradients, highlights, cards, charts, and UI elements.
+4. Replace the footer text from **“by Samer Tallauze”** to:
+
+**Made with 💙 by Samer Tallauze**
+
+The name **Samer Tallauze** should link to:
+https://samertall.com/
+
+Also, please improve the overall **UI and UX** for both the front end and the back-end dashboard to make the platform look more professional, polished, and production-ready.
+
+Please add or improve features such as:
+
+* Dark mode and light mode
+* Smooth animations and transitions
+* Motion graphics where appropriate
+* Better dashboard layout and spacing
+* Improved navigation and usability
+* More professional cards, tables, buttons, and empty states
+* Better responsive behavior across desktop and mobile
+
+There is also a functional issue that needs to be fixed. When I click **“Initialize 6 Agents”**, I get this error:
+
+**“Analysis failed”**
+**“An error occurred during analysis. Please try again.”**
+
+Please debug and fix this issue completely.
+
+If the problem is related to API usage or missing API credits, please find a practical solution so that all platform functions and features continue to work properly. Add a fallback, mock mode, local processing option, or any other solution that allows the platform to function without breaking when API credits are unavailable.
+
+Also, I am not sure what the **Presentations** section inside the dashboard is supposed to do. Please review it, fix it, and make sure it works properly. The current preview appears to show code instead of the actual presentation preview, so please correct that.
+
+Finally, please check the entire platform carefully and make sure everything is working as expected, including all pages, buttons, forms, dashboard sections, previews, integrations, and user flows.

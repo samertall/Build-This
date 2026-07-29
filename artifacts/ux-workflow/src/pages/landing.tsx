@@ -46,17 +46,24 @@ const stats = [
   { value: "3×", label: "Faster stakeholder sign-off" },
 ];
 
+function LogoFull({ height = 36 }: { height?: number }) {
+  return (
+    <img
+      src="/build-this-logo.png"
+      alt="Build-This"
+      style={{ height: `${height}px`, width: "auto" }}
+    />
+  );
+}
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
       {/* Nav */}
       <nav className="fixed top-0 inset-x-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xl leading-none">u</span>
-            </div>
-            <span className="font-bold tracking-tight text-foreground text-xl">uxflow</span>
+          <div className="flex items-center gap-2.5">
+            <LogoFull height={32} />
           </div>
           <div className="flex items-center gap-3">
             <Link href="/sign-in">
@@ -74,7 +81,7 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="relative pt-32 pb-24 px-6 overflow-hidden flex flex-col items-center justify-center min-h-[90vh]">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
-        <div className="absolute top-40 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-40 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/8 rounded-full blur-[120px] pointer-events-none" />
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div initial="hidden" animate="visible" custom={0} variants={fadeUp}>
             <Badge variant="outline" className="mb-6 bg-primary/10 text-primary border-primary/20 px-4 py-1.5 text-xs font-bold tracking-widest uppercase font-mono">
@@ -94,7 +101,7 @@ export default function LandingPage() {
           </motion.p>
           <motion.div initial="hidden" animate="visible" custom={3} variants={fadeUp} className="flex items-center justify-center gap-4 flex-wrap">
             <Link href="/sign-up">
-              <Button size="lg" className="font-semibold px-8 h-14 text-base shadow-lg shadow-primary/20">
+              <Button size="lg" className="font-semibold px-8 h-14 text-base shadow-lg shadow-primary/25">
                 Start a UX Project <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
@@ -179,7 +186,7 @@ export default function LandingPage() {
       <section className="py-24 px-6 bg-background">
         <div className="max-w-6xl mx-auto">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-16">
-            <Badge variant="outline" className="mb-4 bg-sidebar/5 text-sidebar border-sidebar/20 text-xs uppercase tracking-wider font-mono font-bold">Multi-Role</Badge>
+            <Badge variant="outline" className="mb-4 bg-sidebar/5 text-sidebar border-sidebar/20 text-xs uppercase tracking-wider font-mono font-bold dark:bg-primary/10 dark:text-primary dark:border-primary/20">Multi-Role</Badge>
             <h2 className="text-4xl font-bold text-foreground mb-4 tracking-tight">One platform, every team member</h2>
             <p className="text-muted-foreground max-w-xl mx-auto text-lg">Each role gets exactly what they need — no translation layer, no manual reformatting.</p>
           </motion.div>
@@ -209,16 +216,16 @@ export default function LandingPage() {
       <section className="py-24 px-6 bg-card border-y border-border">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
-            <Badge variant="outline" className="mb-6 bg-accent text-accent-foreground border-border text-xs uppercase tracking-wider font-mono font-bold">Human-in-the-Loop</Badge>
+            <Badge variant="outline" className="mb-6 bg-primary/10 text-primary border-primary/20 text-xs uppercase tracking-wider font-mono font-bold">Human-in-the-Loop</Badge>
             <h2 className="text-4xl font-bold text-foreground mb-6 tracking-tight">AI proposes. You decide.</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-12 leading-relaxed">
               Every insight, problem statement, and recommendation requires explicit approval before it becomes actionable. The AI works fast — you stay in control. Approve, reject, or refine anything the agents generate.
             </p>
             <div className="grid sm:grid-cols-3 gap-6 text-left">
               {[
-                { status: "Pending", badge: "bg-amber-100 text-amber-800 border-amber-200", desc: "AI-generated, awaiting your review" },
-                { status: "Approved", badge: "bg-emerald-100 text-emerald-800 border-emerald-200", desc: "Validated and ready for execution" },
-                { status: "Rejected", badge: "bg-rose-100 text-rose-800 border-rose-200", desc: "Flagged and excluded from outputs" },
+                { status: "Pending", badge: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800", desc: "AI-generated, awaiting your review" },
+                { status: "Approved", badge: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800", desc: "Validated and ready for execution" },
+                { status: "Rejected", badge: "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800", desc: "Flagged and excluded from outputs" },
               ].map(s => (
                 <div key={s.status} className="bg-background rounded-xl border border-border p-6 shadow-sm">
                   <div className={`inline-block px-2.5 py-1 rounded-md text-xs font-bold font-mono border mb-3 ${s.badge}`}>
@@ -241,7 +248,7 @@ export default function LandingPage() {
             </div>
             <h2 className="text-3xl font-bold text-foreground mb-4 tracking-tight">About this project</h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-              Created by <span className="text-foreground font-semibold">Samer Tallauze</span> — Senior UX/UI Product Designer | Front-End | SEO | CX. This platform is a working demonstration of agentic AI applied to UX workflow automation.
+              Created by <a href="https://samertall.com/" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold hover:text-primary transition-colors">Samer Tallauze</a> — Senior UX/UI Product Designer | Front-End | SEO | CX. This platform is a working demonstration of agentic AI applied to UX workflow automation.
             </p>
             <p className="text-muted-foreground/80 text-sm font-medium">
               The goal: replace the fragmented stack of spreadsheets, Miro boards, Notion docs, and slide decks with a single intelligent workspace that does the heavy lifting — while keeping designers and product teams firmly in control of every decision.
@@ -257,7 +264,7 @@ export default function LandingPage() {
             <h2 className="text-4xl font-bold mb-6 tracking-tight text-white">Ready to work with AI at the speed of thought?</h2>
             <p className="text-sidebar-foreground/70 mb-10 text-lg font-medium">Start a project in minutes. No setup required.</p>
             <Link href="/sign-up">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-10 h-14 text-base shadow-lg shadow-primary/20">
+              <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-10 h-14 text-base shadow-lg shadow-primary/30">
                 Start a UX Project <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
@@ -268,10 +275,19 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="bg-background border-t border-border py-8 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground font-medium">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center text-primary font-bold text-[10px]">u</div>
-            <span className="font-semibold text-foreground">uxflow</span>
-            <span>by Samer Tallauze</span>
+          <div className="flex items-center gap-2.5">
+            <LogoFull height={24} />
+            <span>
+              Made with 💙 by{" "}
+              <a
+                href="https://samertall.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-semibold transition-colors"
+              >
+                Samer Tallauze
+              </a>
+            </span>
           </div>
           <div>AI-Powered UX Workflow Automation for Smarter Digital Product Design</div>
         </div>

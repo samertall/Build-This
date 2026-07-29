@@ -53,14 +53,14 @@ const clerkAppearance = {
     logoLinkUrl: basePath || "/",
   },
   variables: {
-    colorPrimary: "hsl(10 90% 60%)",
-    colorForeground: "hsl(260 40% 15%)",
-    colorMutedForeground: "hsl(260 15% 45%)",
+    colorPrimary: "#1893F7",
+    colorForeground: "hsl(215 40% 12%)",
+    colorMutedForeground: "hsl(215 15% 48%)",
     colorDanger: "hsl(0 84% 60%)",
-    colorBackground: "hsl(260 30% 99%)",
-    colorInput: "hsl(260 15% 88%)",
-    colorInputForeground: "hsl(260 40% 15%)",
-    colorNeutral: "hsl(260 15% 88%)",
+    colorBackground: "hsl(0 0% 100%)",
+    colorInput: "hsl(215 15% 88%)",
+    colorInputForeground: "hsl(215 40% 12%)",
+    colorNeutral: "hsl(215 15% 88%)",
     fontFamily: "'Plus Jakarta Sans', sans-serif",
     borderRadius: "0.5rem",
   },
@@ -174,9 +174,14 @@ function ClerkProviderWithRoutes() {
 }
 
 function App() {
-  // Set light mode default
   useEffect(() => {
-    document.documentElement.classList.remove('dark');
+    // Restore theme from localStorage, default to light
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
   }, []);
 
   return (
