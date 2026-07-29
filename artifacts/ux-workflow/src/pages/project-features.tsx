@@ -1,7 +1,7 @@
 import { useParams } from "wouter";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Edit2, Check, X } from "lucide-react";
+import { Star, Edit2, Check, X, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,23 +14,23 @@ import { useToast } from "@/hooks/use-toast";
 function MoSCoWBadge({ priority }: { priority?: string | null }) {
   const map: Record<string, string> = {
     must: "bg-destructive/10 text-destructive border-destructive/20",
-    should: "bg-primary/10 text-primary border-primary/20",
-    could: "bg-secondary text-secondary-foreground border-border",
-    wont: "bg-muted text-muted-foreground border-border",
+    should: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+    could: "bg-primary/10 text-primary border-primary/20",
+    wont: "bg-muted text-muted-foreground border-border/50",
   };
   const p = priority ?? "should";
-  return <Badge className={`${map[p] ?? map.should} text-[10px] font-mono font-semibold uppercase tracking-wider`}>{p}</Badge>;
+  return <Badge className={`${map[p] ?? map.should} text-[10px] font-mono font-black uppercase tracking-widest shadow-none`}>{p}</Badge>;
 }
 
 function PhaseBadge({ phase }: { phase?: string | null }) {
   const map: Record<string, string> = {
     mvp: "bg-primary/10 text-primary border-primary/20",
-    phase2: "bg-secondary text-secondary-foreground border-border",
-    future: "bg-muted text-muted-foreground border-border",
+    phase2: "bg-secondary text-secondary-foreground border-border/50",
+    future: "bg-muted text-muted-foreground border-border/50",
   };
   const p = phase ?? "phase2";
   const labels: Record<string, string> = { mvp: "MVP", phase2: "Phase 2", future: "Future" };
-  return <Badge className={`${map[p] ?? map.phase2} text-xs font-mono font-medium tracking-wide`}>{labels[p] ?? p}</Badge>;
+  return <Badge className={`${map[p] ?? map.phase2} text-sm font-mono font-black tracking-widest uppercase shadow-none px-4 py-1.5`}>{labels[p] ?? p}</Badge>;
 }
 
 export default function ProjectFeaturesPage() {
@@ -65,13 +65,13 @@ export default function ProjectFeaturesPage() {
   if (isLoading) {
     return (
       <DashboardLayout projectId={projectId}>
-        <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6 w-full">
+        <div className="p-6 md:p-8 max-w-[1200px] mx-auto space-y-8 w-full">
           <div>
-            <Skeleton className="h-8 w-64 mb-2" />
-            <Skeleton className="h-4 w-96" />
+            <Skeleton className="h-10 w-80 mb-3 rounded-xl" />
+            <Skeleton className="h-5 w-full max-w-xl" />
           </div>
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 rounded-xl" />)}
+          <div className="space-y-6">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-40 rounded-2xl" />)}
           </div>
         </div>
       </DashboardLayout>
@@ -80,97 +80,101 @@ export default function ProjectFeaturesPage() {
 
   return (
     <DashboardLayout projectId={projectId}>
-      <div className="p-6 md:p-8 max-w-5xl mx-auto w-full">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">Feature Prioritization</h1>
-            <p className="text-muted-foreground text-sm mt-2 max-w-xl leading-relaxed">
-              RICE-scored features organized by phase. Edit scores to recalibrate priorities.
+      <div className="p-6 md:p-8 max-w-[1200px] mx-auto w-full">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4 border-b border-border/50 pb-6">
+          <div className="relative">
+            <div className="absolute -left-4 top-2 w-1 h-12 bg-emerald-500 rounded-r-full" />
+            <h1 className="text-3xl font-black text-foreground tracking-tighter">Feature Prioritization</h1>
+            <p className="text-muted-foreground text-base mt-2 max-w-xl font-medium">
+              RICE-scored features organized by phase. Edit scores to recalibrate.
             </p>
           </div>
           {features && (
-            <Badge variant="secondary" className="font-mono text-xs shadow-sm bg-white">
-              {features.length} features
-            </Badge>
+            <div className="flex gap-2 text-sm bg-card border border-border/60 px-4 py-2 rounded-xl shadow-sm glass-card">
+              <span className="text-emerald-600 font-bold font-mono text-base">{features.length} <span className="text-xs uppercase tracking-widest text-emerald-600/70">features</span></span>
+            </div>
           )}
         </div>
 
         {!features || features.length === 0 ? (
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-            <Card className="border-dashed border-border bg-muted/30 shadow-none">
-              <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 shadow-sm">
-                  <Star className="w-8 h-8 text-primary" />
+            <Card className="border-dashed border-2 border-border bg-card/30 shadow-none">
+              <CardContent className="flex flex-col items-center justify-center py-24 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center mb-6 shadow-sm border border-emerald-500/20">
+                  <Star className="w-8 h-8 text-emerald-500" />
                 </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">No features yet</h3>
-                <p className="text-muted-foreground text-sm max-w-sm">
+                <h3 className="font-black text-2xl text-foreground mb-3 tracking-tight">No features prioritized</h3>
+                <p className="text-muted-foreground text-base max-w-md font-medium">
                   Run the Feature Prioritization agent to generate a RICE-scored backlog.
                 </p>
               </CardContent>
             </Card>
           </motion.div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-16">
             {phases.map((phase, pIndex) => {
               const phaseFeatures = features.filter(f => (f.phase ?? "phase2") === phase);
               if (phaseFeatures.length === 0) return null;
               
               return (
                 <div key={phase}>
-                  <div className="flex items-center gap-3 mb-5">
+                  <div className="flex items-center gap-4 mb-6">
                     <PhaseBadge phase={phase} />
                     <div className="h-px flex-1 bg-border/50"></div>
-                    <span className="text-xs font-mono text-muted-foreground">{phaseFeatures.length} item{phaseFeatures.length !== 1 ? 's' : ''}</span>
+                    <span className="text-xs font-black font-mono text-muted-foreground uppercase tracking-widest">{phaseFeatures.length} item{phaseFeatures.length !== 1 ? 's' : ''}</span>
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-5">
                     <AnimatePresence>
                       {phaseFeatures
                         .sort((a, b) => (b.riceScore ?? 0) - (a.riceScore ?? 0))
                         .map((feature, i) => (
                         <motion.div 
                           key={feature.id} 
-                          initial={{ opacity: 0, y: 10 }} 
+                          initial={{ opacity: 0, y: 20 }} 
                           animate={{ opacity: 1, y: 0 }} 
-                          transition={{ delay: (pIndex * 0.1) + (i * 0.05), duration: 0.3 }}
+                          transition={{ delay: (pIndex * 0.1) + (i * 0.05), type: "spring", stiffness: 300, damping: 30 }}
                         >
-                          <Card className="border-border bg-card shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group">
+                          <Card className="border-border/60 bg-card shadow-sm hover:shadow-[0_8px_30px_rgba(16,185,129,0.1)] hover:border-emerald-500/30 transition-all duration-300 overflow-hidden group glass-card">
                             <CardContent className="p-0">
-                              <div className="flex flex-col sm:flex-row items-stretch sm:items-center">
+                              <div className="flex flex-col sm:flex-row items-stretch sm:items-center relative">
+                                {/* Ambient glow on hover */}
+                                <div className="absolute top-0 left-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-[40px] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
+
                                 {/* RICE score */}
-                                <div className="sm:w-28 sm:h-auto p-4 sm:p-6 bg-primary/5 sm:border-r border-b sm:border-b-0 border-border flex sm:flex-col items-center justify-center flex-shrink-0 gap-2 sm:gap-1">
-                                  <div className="text-xs font-mono font-medium text-primary uppercase tracking-widest sm:mb-1">RICE</div>
-                                  <div className="text-2xl sm:text-3xl font-bold font-mono text-primary tracking-tight">
+                                <div className="sm:w-32 sm:h-auto p-5 sm:p-6 bg-gradient-to-br from-emerald-500/10 to-transparent sm:border-r border-b sm:border-b-0 border-border/50 flex sm:flex-col items-center justify-center flex-shrink-0 gap-3 sm:gap-2 relative z-10">
+                                  <div className="text-[11px] font-black font-mono text-emerald-600 uppercase tracking-widest">RICE</div>
+                                  <div className="text-4xl font-black font-mono text-emerald-700 dark:text-emerald-400 tracking-tighter group-hover:scale-110 transition-transform duration-300">
                                     {feature.riceScore?.toFixed(0) ?? "—"}
                                   </div>
                                 </div>
 
-                                <div className="flex-1 p-4 sm:p-5 min-w-0">
-                                  <div className="flex items-center gap-3 flex-wrap mb-2">
-                                    <h3 className="font-semibold text-foreground text-base tracking-tight">{feature.title}</h3>
+                                <div className="flex-1 p-6 sm:p-7 min-w-0 relative z-10">
+                                  <div className="flex items-center gap-4 flex-wrap mb-3">
+                                    <h3 className="font-black text-foreground text-xl tracking-tight leading-none">{feature.title}</h3>
                                     <MoSCoWBadge priority={feature.moscowPriority} />
                                     {feature.category && (
-                                      <Badge variant="secondary" className="text-[10px] font-mono text-secondary-foreground capitalize">
+                                      <Badge variant="secondary" className="text-[10px] font-black font-mono text-muted-foreground uppercase tracking-widest shadow-none bg-secondary/50">
                                         {feature.category.replace(/_/g, ' ')}
                                       </Badge>
                                     )}
                                   </div>
                                   
                                   {feature.description && (
-                                    <p className="text-muted-foreground text-sm mb-5 leading-relaxed line-clamp-2 pr-4">
+                                    <p className="text-muted-foreground text-base mb-6 leading-relaxed line-clamp-2 pr-4 font-medium">
                                       {feature.description}
                                     </p>
                                   )}
 
                                   {/* RICE components */}
-                                  <div className="flex flex-wrap gap-x-6 gap-y-3 text-xs font-mono">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-muted-foreground uppercase tracking-wider text-[10px]">Reach</span>
+                                  <div className="flex flex-wrap gap-x-8 gap-y-4 text-sm font-mono">
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-muted-foreground uppercase font-black tracking-widest text-[10px]">Reach</span>
                                       {editingId === feature.id ? (
-                                        <div className="flex items-center gap-1 bg-muted p-1 rounded-md">
+                                        <div className="flex items-center gap-2 bg-background p-1.5 rounded-xl border border-primary/30 shadow-[0_0_15px_rgba(24,147,247,0.15)]">
                                           <Input
                                             value={editReach}
                                             onChange={e => setEditReach(e.target.value)}
-                                            className="h-6 w-16 text-xs px-2 bg-background border-border font-mono shadow-sm"
+                                            className="h-8 w-20 text-sm px-3 bg-transparent border-0 focus-visible:ring-0 font-mono font-bold"
                                             type="number"
                                             min={1} max={10000}
                                             autoFocus
@@ -179,33 +183,33 @@ export default function ProjectFeaturesPage() {
                                               if (e.key === 'Escape') setEditingId(null);
                                             }}
                                           />
-                                          <button onClick={() => handleUpdateReach(feature.id)} className="w-6 h-6 flex items-center justify-center text-primary hover:bg-background rounded shadow-sm transition-colors"><Check className="w-3.5 h-3.5" /></button>
-                                          <button onClick={() => setEditingId(null)} className="w-6 h-6 flex items-center justify-center text-destructive hover:bg-background rounded shadow-sm transition-colors"><X className="w-3.5 h-3.5" /></button>
+                                          <button onClick={() => handleUpdateReach(feature.id)} className="w-8 h-8 flex items-center justify-center text-primary hover:bg-primary/10 rounded-lg transition-colors"><Check className="w-4 h-4" /></button>
+                                          <button onClick={() => setEditingId(null)} className="w-8 h-8 flex items-center justify-center text-destructive hover:bg-destructive/10 rounded-lg transition-colors"><X className="w-4 h-4" /></button>
                                         </div>
                                       ) : (
-                                        <div className="flex items-center gap-1.5 group/edit">
-                                          <span className="text-foreground font-semibold">{feature.reach ?? "—"}</span>
+                                        <div className="flex items-center gap-2 group/edit bg-secondary/40 px-3 py-1.5 rounded-lg border border-border/50">
+                                          <span className="text-foreground font-bold">{feature.reach ?? "—"}</span>
                                           <button 
                                             onClick={() => { setEditingId(feature.id); setEditReach(String(feature.reach ?? "")); }} 
                                             className="text-muted-foreground/50 hover:text-primary transition-colors opacity-0 group-hover/edit:opacity-100 focus:opacity-100"
                                             aria-label="Edit reach"
                                           >
-                                            <Edit2 className="w-3 h-3" />
+                                            <Edit2 className="w-3.5 h-3.5" />
                                           </button>
                                         </div>
                                       )}
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-muted-foreground uppercase tracking-wider text-[10px]">Impact</span>
-                                      <span className="text-foreground font-semibold">{feature.impact ?? "—"}</span>
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-muted-foreground uppercase font-black tracking-widest text-[10px]">Impact</span>
+                                      <span className="text-foreground font-bold bg-secondary/40 px-3 py-1.5 rounded-lg border border-border/50">{feature.impact ?? "—"}</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-muted-foreground uppercase tracking-wider text-[10px]">Confidence</span>
-                                      <span className="text-foreground font-semibold">{feature.confidence ?? "—"}%</span>
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-muted-foreground uppercase font-black tracking-widest text-[10px]">Conf</span>
+                                      <span className="text-foreground font-bold bg-secondary/40 px-3 py-1.5 rounded-lg border border-border/50">{feature.confidence ?? "—"}%</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-muted-foreground uppercase tracking-wider text-[10px]">Effort</span>
-                                      <span className="text-foreground font-semibold">{feature.effort ?? "—"}w</span>
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-muted-foreground uppercase font-black tracking-widest text-[10px]">Effort</span>
+                                      <span className="text-foreground font-bold bg-secondary/40 px-3 py-1.5 rounded-lg border border-border/50">{feature.effort ?? "—"}</span>
                                     </div>
                                   </div>
                                 </div>

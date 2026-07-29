@@ -1,12 +1,26 @@
 import { Link } from "wouter";
-import { motion } from "framer-motion";
-import { ArrowRight, Brain, Target, Layers, Zap, Users, BarChart3, Presentation, CheckCircle, ChevronRight, Cpu, FlaskConical, Route, Star, GitBranch, ListChecks, Search, Lightbulb, Workflow } from "lucide-react";
+import { motion, useScroll, useTransform, useMotionValue, animate } from "framer-motion";
+import { useEffect, useRef } from "react";
+import { ArrowRight, Brain, Target, Layers, Zap, Users, BarChart3, Presentation, CheckCircle, ChevronRight, Cpu, FlaskConical, Route, Star, GitBranch, ListChecks, Search, Lightbulb, Workflow, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
 const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { duration: 0.5, delay: i * 0.08 } }),
+  hidden: { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
+};
+
+const wordReveal = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } }
 };
 
 const agents = [
@@ -40,10 +54,10 @@ const steps = [
 ];
 
 const stats = [
-  { value: "60%", label: "Reduction in research synthesis time" },
-  { value: "12×", label: "AI agents working in parallel" },
-  { value: "80%", label: "Fewer ambiguous dev tickets" },
-  { value: "3×", label: "Faster stakeholder sign-off" },
+  { value: 60, suffix: "%", label: "Reduction in synthesis time" },
+  { value: 12, suffix: "x", label: "AI agents in parallel" },
+  { value: 80, suffix: "%", label: "Fewer ambiguous tickets" },
+  { value: 3, suffix: "x", label: "Faster sign-off" },
 ];
 
 function LogoFull({ height = 36 }: { height?: number }) {
@@ -56,156 +70,211 @@ function LogoFull({ height = 36 }: { height?: number }) {
   );
 }
 
-export default function LandingPage() {
+function StatCounter({ value, suffix, label }: { value: number; suffix: string; label: string }) {
+  const count = useMotionValue(0);
+  const rounded = useTransform(count, Math.round);
+  
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans">
+    <motion.div 
+      initial="hidden" 
+      whileInView="visible" 
+      viewport={{ once: true, margin: "-100px" }}
+      variants={fadeUp}
+      onViewportEnter={() => animate(count, value, { duration: 2, ease: "easeOut" })}
+      className="text-center group"
+    >
+      <div className="text-5xl md:text-6xl font-black text-primary mb-3 tracking-tighter flex items-center justify-center text-glow transition-transform duration-500 group-hover:scale-110">
+        <motion.span>{rounded}</motion.span>
+        <span>{suffix}</span>
+      </div>
+      <div className="text-sm md:text-base text-muted-foreground font-bold uppercase tracking-widest">{label}</div>
+    </motion.div>
+  );
+}
+
+export default function LandingPage() {
+  const { scrollYProgress } = useScroll();
+  const heroY = useTransform(scrollYProgress, [0, 1], [0, 400]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+  const timelineProgress = useTransform(scrollYProgress, [0.3, 0.6], [0, 100]);
+
+  return (
+    <div className="min-h-screen bg-background text-foreground font-sans overflow-x-hidden selection:bg-primary/30 selection:text-foreground">
       {/* Nav */}
-      <nav className="fixed top-0 inset-x-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <LogoFull height={32} />
-          </div>
-          <div className="flex items-center gap-3">
+      <nav className="fixed top-0 inset-x-0 z-50 border-b border-border/50 bg-background/60 backdrop-blur-xl transition-all">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="flex items-center gap-2.5"
+          >
+            <LogoFull height={40} />
+          </motion.div>
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="flex items-center gap-4"
+          >
             <Link href="/sign-in">
-              <Button variant="ghost" size="sm" className="font-medium">Sign in</Button>
+              <Button variant="ghost" size="sm" className="font-bold text-sm tracking-wide">Sign in</Button>
             </Link>
             <Link href="/sign-up">
-              <Button size="sm" className="font-semibold shadow-sm">
+              <Button size="sm" className="font-bold tracking-wide shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-transform">
                 Start free
               </Button>
             </Link>
-          </div>
+          </motion.div>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="relative pt-32 pb-24 px-6 overflow-hidden flex flex-col items-center justify-center min-h-[90vh]">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
-        <div className="absolute top-40 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/8 rounded-full blur-[120px] pointer-events-none" />
-        <div className="max-w-5xl mx-auto text-center relative z-10">
-          <motion.div initial="hidden" animate="visible" custom={0} variants={fadeUp}>
-            <Badge variant="outline" className="mb-6 bg-primary/10 text-primary border-primary/20 px-4 py-1.5 text-xs font-bold tracking-widest uppercase font-mono">
+      <section className="relative pt-32 pb-32 px-6 overflow-hidden flex flex-col items-center justify-center min-h-[100dvh]">
+        {/* Animated Background Orbs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] mix-blend-screen animate-drift opacity-70" />
+          <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[100px] mix-blend-screen animate-drift opacity-50" style={{ animationDelay: '-5s', animationDuration: '25s' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-indigo-500/10 rounded-full blur-[150px] mix-blend-screen animate-pulse-glow" />
+          
+          {/* Subtle noise texture */}
+          <div className="absolute inset-0 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay" />
+        </div>
+
+        <motion.div 
+          style={{ y: heroY, opacity: heroOpacity }}
+          className="max-w-5xl mx-auto text-center relative z-10"
+        >
+          <motion.div initial="hidden" animate="visible" variants={fadeUp}>
+            <Badge variant="outline" className="mb-8 bg-background/50 backdrop-blur-md text-primary border-primary/30 px-5 py-2 text-sm font-black tracking-widest uppercase font-mono shadow-[0_0_20px_rgba(24,147,247,0.2)]">
               Agentic AI for UX Teams
             </Badge>
           </motion.div>
-          <motion.h1 initial="hidden" animate="visible" custom={1} variants={fadeUp}
-            className="text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight text-foreground mb-6">
-            From Scattered UX Inputs<br />
-            <span className="text-primary">
-              to Clear Product Execution.
+          
+          <motion.h1 
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            className="text-6xl md:text-8xl lg:text-[7.5rem] font-black leading-[1.05] tracking-tighter text-foreground mb-8 drop-shadow-sm"
+          >
+            {"From Scattered Inputs".split(" ").map((word, i) => (
+              <motion.span key={i} variants={wordReveal} className="inline-block mr-3 lg:mr-4">{word}</motion.span>
+            ))}
+            <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-indigo-500 animate-gradient pb-2 inline-block">
+              {"to Clear Execution.".split(" ").map((word, i) => (
+                <motion.span key={i} variants={wordReveal} className="inline-block mr-3 lg:mr-4">{word}</motion.span>
+              ))}
             </span>
           </motion.h1>
-          <motion.p initial="hidden" animate="visible" custom={2} variants={fadeUp}
-            className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-10 leading-relaxed font-medium">
-            An agentic AI workspace that analyzes research, business goals, content, and design material — then generates UX insights, user flows, feature priorities, actionable tasks, and professional presentations.
+          
+          <motion.p initial="hidden" animate="visible" variants={fadeUp} className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-12 leading-relaxed font-medium">
+            An agentic AI workspace that analyzes research, goals, and design material — generating insights, flows, priorities, and professional presentations.
           </motion.p>
-          <motion.div initial="hidden" animate="visible" custom={3} variants={fadeUp} className="flex items-center justify-center gap-4 flex-wrap">
+          
+          <motion.div initial="hidden" animate="visible" variants={fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-5 flex-wrap relative z-20">
             <Link href="/sign-up">
-              <Button size="lg" className="font-semibold px-8 h-14 text-base shadow-lg shadow-primary/25">
-                Start a UX Project <ArrowRight className="ml-2 w-5 h-5" />
+              <Button size="lg" className="font-bold px-10 h-16 text-lg shadow-[0_0_40px_rgba(24,147,247,0.4)] hover:shadow-[0_0_60px_rgba(24,147,247,0.6)] hover:-translate-y-1 transition-all duration-300 rounded-full relative overflow-hidden group">
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer" />
+                Start a UX Project <ArrowRight className="ml-2 w-6 h-6 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
             <Link href="/sign-in">
-              <Button size="lg" variant="outline" className="h-14 px-8 text-base font-medium">
+              <Button size="lg" variant="outline" className="h-16 px-10 text-lg font-bold rounded-full border-border/80 bg-background/50 backdrop-blur-sm hover:bg-muted hover:-translate-y-1 transition-all duration-300">
                 View the Demo
               </Button>
             </Link>
           </motion.div>
-          <motion.p initial="hidden" animate="visible" custom={4} variants={fadeUp}
-            className="mt-8 text-sm text-muted-foreground font-mono">
-            Built for designers, product managers, developers, marketers, and business leaders.
-          </motion.p>
-        </div>
+        </motion.div>
       </section>
 
       {/* Stats */}
-      <section className="py-16 px-6 border-y border-border bg-card">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+      <section className="py-24 px-6 border-y border-border/50 bg-card/30 relative z-20 backdrop-blur-lg">
+        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-8">
           {stats.map((s, i) => (
-            <motion.div key={s.label} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}
-              className="text-center">
-              <div className="text-4xl font-bold text-primary mb-2 tracking-tight">{s.value}</div>
-              <div className="text-sm text-muted-foreground font-medium">{s.label}</div>
-            </motion.div>
+            <StatCounter key={s.label} value={s.value} suffix={s.suffix} label={s.label} />
           ))}
         </div>
       </section>
 
       {/* Workflow Steps */}
-      <section className="py-24 px-6 bg-background">
-        <div className="max-w-6xl mx-auto">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-16">
-            <Badge variant="outline" className="mb-4 bg-secondary text-secondary-foreground border-border text-xs uppercase tracking-wider font-mono font-bold">How it works</Badge>
-            <h2 className="text-4xl font-bold text-foreground mb-4 tracking-tight">Four steps from input to execution</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto text-lg">No more losing context between tools. The entire UX workflow lives in one structured, AI-powered workspace.</p>
+      <section className="py-32 px-6 bg-background relative z-10 overflow-hidden">
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[150px] pointer-events-none" />
+        <div className="max-w-7xl mx-auto relative">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="text-center mb-24">
+            <Badge variant="outline" className="mb-6 bg-secondary/50 text-secondary-foreground border-border text-sm uppercase tracking-widest font-mono font-black">How it works</Badge>
+            <h2 className="text-5xl md:text-6xl font-black text-foreground mb-6 tracking-tighter">Four steps to execution</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto text-xl font-medium">No more losing context between tools. The entire UX workflow lives in one structured workspace.</p>
           </motion.div>
-          <div className="grid md:grid-cols-4 gap-6">
-            {steps.map((s, i) => (
-              <motion.div key={s.number} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}
-                className="relative group">
-                {i < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-8 left-full w-full h-px bg-border z-0" />
-                )}
-                <div className="relative z-10 bg-card border border-border rounded-2xl p-8 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300">
-                  <div className="text-5xl font-extrabold text-muted/50 mb-6 leading-none tracking-tighter">{s.number}</div>
-                  <h3 className="text-foreground font-bold mb-3 text-lg tracking-tight">{s.label}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{s.desc}</p>
-                </div>
-              </motion.div>
-            ))}
+          
+          <div className="relative">
+            {/* Animated Progress Line */}
+            <div className="hidden md:block absolute top-12 left-0 w-full h-1 bg-border/50 rounded-full overflow-hidden z-0">
+              <motion.div 
+                className="h-full bg-gradient-to-r from-primary via-blue-400 to-primary rounded-full"
+                style={{ width: useTransform(timelineProgress, v => `${v}%`) }}
+              />
+            </div>
+
+            <div className="grid md:grid-cols-4 gap-8 md:gap-6">
+              {steps.map((s, i) => (
+                <motion.div 
+                  key={s.number} 
+                  initial="hidden" 
+                  whileInView="visible" 
+                  viewport={{ once: true, margin: "-50px" }} 
+                  custom={i} 
+                  variants={{
+                    hidden: { opacity: 0, y: 40 },
+                    visible: (i) => ({ opacity: 1, y: 0, transition: { duration: 0.6, delay: i * 0.15, type: "spring" } })
+                  }}
+                  className="relative z-10 group"
+                >
+                  <div className="glass-card rounded-3xl p-8 h-full relative overflow-hidden group-hover:-translate-y-2 transition-transform duration-500">
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="text-6xl font-black text-muted-foreground/20 mb-8 leading-none tracking-tighter transition-colors duration-500 group-hover:text-primary/20">{s.number}</div>
+                    <h3 className="text-foreground font-bold mb-4 text-2xl tracking-tight">{s.label}</h3>
+                    <p className="text-muted-foreground text-base leading-relaxed font-medium">{s.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       {/* 12 Agents */}
-      <section className="py-24 px-6 bg-muted/30 border-y border-border">
-        <div className="max-w-6xl mx-auto">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-16">
-            <Badge variant="outline" className="mb-4 bg-primary/10 text-primary border-primary/20 text-xs uppercase tracking-wider font-mono font-bold">12 AI Agents</Badge>
-            <h2 className="text-4xl font-bold text-foreground mb-4 tracking-tight">Specialized intelligence at every stage</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto text-lg">Each agent is purpose-built for a specific UX discipline. They work in sequence, feeding context forward.</p>
+      <section className="py-32 px-6 bg-card border-y border-border/50 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.02] mix-blend-overlay pointer-events-none" />
+        <div className="max-w-7xl mx-auto relative z-10">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="text-center mb-20">
+            <Badge variant="outline" className="mb-6 bg-primary/10 text-primary border-primary/20 text-sm uppercase tracking-widest font-mono font-black shadow-[0_0_15px_rgba(24,147,247,0.15)]">12 AI Agents</Badge>
+            <h2 className="text-5xl md:text-6xl font-black text-foreground mb-6 tracking-tighter">Specialized intelligence</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto text-xl font-medium">Each agent is purpose-built for a specific UX discipline. They work in sequence, feeding context forward.</p>
           </motion.div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {agents.map((agent, i) => (
-              <motion.div key={agent.name} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i % 6} variants={fadeUp}
-                className="flex items-start gap-4 bg-card border border-border rounded-xl p-5 hover:border-primary/30 hover:shadow-sm transition-all duration-200">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
-                  <agent.icon className="w-5 h-5" />
+              <motion.div 
+                key={agent.name} 
+                initial="hidden" 
+                whileInView="visible" 
+                viewport={{ once: true, margin: "-50px" }} 
+                custom={i} 
+                variants={{
+                  hidden: { opacity: 0, scale: 0.9, y: 20 },
+                  visible: (i) => ({ opacity: 1, scale: 1, y: 0, transition: { duration: 0.5, delay: (i % 6) * 0.08, type: "spring", stiffness: 200 } })
+                }}
+                className="group relative"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-primary to-blue-500 rounded-2xl blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
+                <div className="glass-card rounded-2xl p-6 h-full flex flex-col relative z-10 bg-background/50 hover:bg-background/80 transition-colors duration-300">
+                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-sm border border-primary/10">
+                    <agent.icon className="w-7 h-7" />
+                  </div>
+                  <div className="text-foreground font-black text-xl mb-3 tracking-tight group-hover:text-primary transition-colors">{agent.name}</div>
+                  <div className="text-muted-foreground text-base leading-relaxed font-medium">{agent.desc}</div>
                 </div>
-                <div>
-                  <div className="text-foreground font-bold text-sm mb-1">{agent.name}</div>
-                  <div className="text-muted-foreground text-sm leading-relaxed">{agent.desc}</div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Roles */}
-      <section className="py-24 px-6 bg-background">
-        <div className="max-w-6xl mx-auto">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-16">
-            <Badge variant="outline" className="mb-4 bg-sidebar/5 text-sidebar border-sidebar/20 text-xs uppercase tracking-wider font-mono font-bold dark:bg-primary/10 dark:text-primary dark:border-primary/20">Multi-Role</Badge>
-            <h2 className="text-4xl font-bold text-foreground mb-4 tracking-tight">One platform, every team member</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto text-lg">Each role gets exactly what they need — no translation layer, no manual reformatting.</p>
-          </motion.div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
-            {roles.map((r, i) => (
-              <motion.div key={r.role} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}
-                className="bg-card border border-border rounded-2xl p-6 hover:shadow-md hover:border-primary/20 transition-all duration-300">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4">
-                  <r.icon className="w-6 h-6" />
-                </div>
-                <div className="font-bold text-foreground text-base mb-4 tracking-tight">{r.role}</div>
-                <ul className="space-y-2.5">
-                  {r.outputs.map(o => (
-                    <li key={o} className="flex items-start gap-2 text-sm text-muted-foreground font-medium">
-                      <ChevronRight className="w-4 h-4 text-primary/50 flex-shrink-0 mt-0.5" />
-                      {o}
-                    </li>
-                  ))}
-                </ul>
               </motion.div>
             ))}
           </div>
@@ -213,59 +282,57 @@ export default function LandingPage() {
       </section>
 
       {/* Human-in-the-loop */}
-      <section className="py-24 px-6 bg-card border-y border-border">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
-            <Badge variant="outline" className="mb-6 bg-primary/10 text-primary border-primary/20 text-xs uppercase tracking-wider font-mono font-bold">Human-in-the-Loop</Badge>
-            <h2 className="text-4xl font-bold text-foreground mb-6 tracking-tight">AI proposes. You decide.</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-12 leading-relaxed">
-              Every insight, problem statement, and recommendation requires explicit approval before it becomes actionable. The AI works fast — you stay in control. Approve, reject, or refine anything the agents generate.
+      <section className="py-32 px-6 bg-background relative overflow-hidden">
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="max-w-5xl mx-auto text-center relative z-10">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp}>
+            <Badge variant="outline" className="mb-8 bg-primary/10 text-primary border-primary/20 text-sm uppercase tracking-widest font-mono font-black">Human-in-the-Loop</Badge>
+            <h2 className="text-5xl md:text-7xl font-black text-foreground mb-8 tracking-tighter">AI proposes. <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">You decide.</span></h2>
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-16 leading-relaxed font-medium">
+              Every insight, problem statement, and recommendation requires explicit approval before it becomes actionable. The AI works fast — you stay in control.
             </p>
-            <div className="grid sm:grid-cols-3 gap-6 text-left">
+            
+            <div className="grid sm:grid-cols-3 gap-8 text-left">
               {[
-                { status: "Pending", badge: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800", desc: "AI-generated, awaiting your review" },
-                { status: "Approved", badge: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800", desc: "Validated and ready for execution" },
-                { status: "Rejected", badge: "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800", desc: "Flagged and excluded from outputs" },
-              ].map(s => (
-                <div key={s.status} className="bg-background rounded-xl border border-border p-6 shadow-sm">
-                  <div className={`inline-block px-2.5 py-1 rounded-md text-xs font-bold font-mono border mb-3 ${s.badge}`}>
+                { status: "Pending", icon: Clock, badge: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800", desc: "AI-generated, awaiting your review" },
+                { status: "Approved", icon: CheckCircle, badge: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800", desc: "Validated and ready for execution" },
+                { status: "Rejected", icon: Target, badge: "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800", desc: "Flagged and excluded from outputs" },
+              ].map((s, i) => (
+                <motion.div 
+                  key={s.status} 
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.5, delay: i * 0.15, type: "spring" }}
+                  className="glass-card rounded-2xl p-8 hover:-translate-y-2 transition-transform duration-500 group relative overflow-hidden"
+                >
+                  <div className={`absolute top-0 right-0 p-6 opacity-5 transition-transform duration-500 group-hover:scale-150 group-hover:-rotate-12`}>
+                    <s.icon className="w-24 h-24" />
+                  </div>
+                  <div className={`inline-block px-4 py-1.5 rounded-lg text-sm font-black font-mono border-2 mb-6 ${s.badge} shadow-sm`}>
                     {s.status}
                   </div>
-                  <div className="text-sm text-muted-foreground font-medium">{s.desc}</div>
-                </div>
+                  <div className="text-lg text-muted-foreground font-semibold relative z-10">{s.desc}</div>
+                </motion.div>
               ))}
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* About */}
-      <section className="py-24 px-6 bg-background">
-        <div className="max-w-3xl mx-auto text-center">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6 text-primary">
-              <Users className="w-7 h-7" />
-            </div>
-            <h2 className="text-3xl font-bold text-foreground mb-4 tracking-tight">About this project</h2>
-            <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-              Created by <a href="https://samertall.com/" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold hover:text-primary transition-colors">Samer Tallauze</a> — Senior UX/UI Product Designer | Front-End | SEO | CX. This platform is a working demonstration of agentic AI applied to UX workflow automation.
-            </p>
-            <p className="text-muted-foreground/80 text-sm font-medium">
-              The goal: replace the fragmented stack of spreadsheets, Miro boards, Notion docs, and slide decks with a single intelligent workspace that does the heavy lifting — while keeping designers and product teams firmly in control of every decision.
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
       {/* CTA */}
-      <section className="py-24 px-6 bg-sidebar text-sidebar-foreground border-t border-sidebar-border">
-        <div className="max-w-3xl mx-auto text-center">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
-            <h2 className="text-4xl font-bold mb-6 tracking-tight text-white">Ready to work with AI at the speed of thought?</h2>
-            <p className="text-sidebar-foreground/70 mb-10 text-lg font-medium">Start a project in minutes. No setup required.</p>
+      <section className="py-32 px-6 bg-foreground text-background relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-primary/40 rounded-full blur-[150px] animate-pulse-glow" />
+        
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp}>
+            <h2 className="text-6xl md:text-7xl font-black mb-8 tracking-tighter text-background">Work with AI at the speed of thought.</h2>
+            <p className="text-background/70 mb-12 text-2xl font-medium max-w-2xl mx-auto">Start a project in minutes. No complex setup required.</p>
             <Link href="/sign-up">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-10 h-14 text-base shadow-lg shadow-primary/30">
-                Start a UX Project <ArrowRight className="ml-2 w-5 h-5" />
+              <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-black px-12 h-20 text-xl shadow-[0_0_50px_rgba(24,147,247,0.5)] hover:shadow-[0_0_80px_rgba(24,147,247,0.8)] rounded-full hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border border-primary-foreground/20">
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer" />
+                Initialize Workspace <ArrowRight className="ml-3 w-7 h-7 group-hover:translate-x-2 transition-transform" />
               </Button>
             </Link>
           </motion.div>
@@ -273,23 +340,19 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-background border-t border-border py-8 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground font-medium">
-          <div className="flex items-center gap-2.5">
-            <LogoFull height={24} />
+      <footer className="bg-background border-t border-border/50 py-12 px-6">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-muted-foreground font-medium">
+          <div className="flex items-center gap-3">
+            <LogoFull height={28} />
+            <span className="opacity-60">|</span>
             <span>
-              Made with 💙 by{" "}
-              <a
-                href="https://samertall.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline font-semibold transition-colors"
-              >
+              Crafted with intent by{" "}
+              <a href="https://samertall.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 font-bold transition-colors">
                 Samer Tallauze
               </a>
             </span>
           </div>
-          <div>AI-Powered UX Workflow Automation for Smarter Digital Product Design</div>
+          <div className="font-mono text-xs uppercase tracking-widest opacity-60">AI-Powered UX Workflow Automation</div>
         </div>
       </footer>
     </div>
