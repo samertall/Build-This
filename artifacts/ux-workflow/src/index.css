@@ -332,3 +332,139 @@
   background-size: 200% 200%;
   animation: gradient-shift 8s ease infinite;
 }
+
+/* Shimmer slide — for skeleton/card load effects */
+@keyframes shimmer-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+.animate-shimmer-slide {
+  animation: shimmer-slide 1.8s ease-in-out infinite;
+}
+
+/* Breathe — subtle scale pulse for empty states */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+.animate-breathe {
+  animation: breathe 4s ease-in-out infinite;
+}
+
+/* Scan line — horizontal sweep for loading indicators */
+@keyframes scan {
+  0% { top: 0%; }
+  100% { top: 100%; }
+}
+.animate-scan {
+  animation: scan 2s linear infinite;
+}
+
+/* Border glow flow */
+@keyframes border-flow {
+  0%, 100% { border-color: rgba(24,147,247,0.2); box-shadow: 0 0 0 0 rgba(24,147,247,0); }
+  50% { border-color: rgba(24,147,247,0.6); box-shadow: 0 0 20px 2px rgba(24,147,247,0.2); }
+}
+.animate-border-flow {
+  animation: border-flow 3s ease-in-out infinite;
+}
+
+/* Ping with color */
+@keyframes ping-blue {
+  75%, 100% { transform: scale(2); opacity: 0; }
+}
+.animate-ping-blue {
+  animation: ping-blue 1.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Orbit — rotate around a center point */
+@keyframes orbit {
+  0% { transform: rotate(0deg) translateX(32px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(32px) rotate(-360deg); }
+}
+.animate-orbit {
+  animation: orbit 6s linear infinite;
+}
+
+/* Typewriter cursor blink */
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.animate-cursor {
+  animation: cursor-blink 1s step-end infinite;
+}
+
+/* Slide up reveal */
+@keyframes slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-slide-up {
+  animation: slide-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Tilt glow card */
+.card-glow {
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.card-glow:hover {
+  box-shadow: 0 20px 60px rgba(24,147,247,0.18), 0 0 0 1px rgba(24,147,247,0.2);
+  transform: translateY(-4px);
+}
+
+/* Active nav glow */
+.nav-active-glow {
+  box-shadow: inset 0 0 20px rgba(24,147,247,0.08), 0 0 0 1px rgba(24,147,247,0.15);
+}
+
+/* Number glow on hover */
+.number-glow {
+  transition: text-shadow 0.3s ease;
+}
+.number-glow:hover {
+  text-shadow: 0 0 20px rgba(24,147,247,0.6), 0 0 40px rgba(24,147,247,0.3);
+}
+
+/* Page section header bar */
+.section-bar::before {
+  content: '';
+  position: absolute;
+  left: -1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: linear-gradient(to bottom, transparent, hsl(var(--primary)), transparent);
+  border-radius: 99px;
+}
+
+/* Gradient text */
+.text-gradient {
+  background: linear-gradient(135deg, hsl(var(--primary)), #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Mesh grid background */
+.mesh-grid {
+  background-image:
+    linear-gradient(rgba(24,147,247,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(24,147,247,0.06) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* Dot grid background */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(24,147,247,0.15) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Approval row hover highlight */
+.approval-row {
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.approval-row:hover {
+  background: rgba(24,147,247,0.03);
+}

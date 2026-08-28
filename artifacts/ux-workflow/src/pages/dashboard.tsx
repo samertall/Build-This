@@ -1,38 +1,39 @@
 import { Link, useLocation } from "wouter";
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { motion, useMotionValue, animate, useTransform } from "framer-motion";
+import { useEffect } from "react";
 import { Plus, FolderOpen, Brain, CheckCircle, ListChecks, Presentation, Clock, ArrowRight, Loader2, AlertTriangle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardLayout } from "@/layouts/dashboard-layout";
 import { useGetDashboardSummary, useListProjects } from "@workspace/api-client-react";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 30, scale: 0.98 },
-  visible: (i = 0) => ({ opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 300, damping: 30, delay: i * 0.06 } }),
-};
+const springIn = (i: number) => ({
+  initial: { opacity: 0, y: 28, scale: 0.96 },
+  animate: { opacity: 1, y: 0, scale: 1 },
+  transition: { type: "spring" as const, stiffness: 280, damping: 26, delay: i * 0.06 },
+});
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === "complete") return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs font-mono font-medium shadow-none">Complete</Badge>;
-  if (status === "running") return <Badge className="bg-primary/15 text-primary border-primary/20 text-xs font-mono font-medium shadow-none animate-pulse">Running</Badge>;
-  if (status === "error") return <Badge className="bg-destructive/15 text-destructive border-destructive/20 text-xs font-mono font-medium shadow-none">Error</Badge>;
-  return <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-xs font-mono font-medium shadow-none">Pending</Badge>;
-}
-
-function Counter({ value }: { value: number | string }) {
-  const nodeRef = useRef<HTMLDivElement>(null);
+function AnimatedCounter({ value, className }: { value: number; className?: string }) {
   const count = useMotionValue(0);
   const rounded = useTransform(count, Math.round);
-  const numericValue = typeof value === 'string' ? parseFloat(value) : value;
-
   useEffect(() => {
-    const animation = animate(count, numericValue, { duration: 1.5, ease: "easeOut" });
-    return animation.stop;
-  }, [numericValue]);
+    const ctrl = animate(count, value, { duration: 1.4, ease: "easeOut" });
+    return ctrl.stop;
+  }, [value]);
+  return <motion.span className={className}>{rounded}</motion.span>;
+}
 
-  return <motion.div ref={nodeRef}>{rounded}</motion.div>;
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, string> = {
+    complete: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800/50",
+    running: "bg-primary/15 text-primary border-primary/20 animate-pulse",
+    error: "bg-destructive/15 text-destructive border-destructive/20",
+    pending: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800/50",
+  };
+  const s = status in map ? status : "pending";
+  return <Badge className={`${map[s]} capitalize font-mono font-bold text-[10px] shadow-none px-2.5`}>{s}</Badge>;
 }
 
 export default function DashboardPage() {
@@ -41,139 +42,185 @@ export default function DashboardPage() {
   const { data: projects, isLoading: projectsLoading } = useListProjects();
 
   const statCards = [
-    { label: "Total Projects", value: summary?.totalProjects ?? 0, icon: FolderOpen, color: "text-primary", bg: "bg-primary/10" },
-    { label: "Research Insights", value: summary?.totalInsights ?? 0, icon: Brain, color: "text-purple-600", bg: "bg-purple-100" },
-    { label: "Pending Approvals", value: summary?.pendingApprovals ?? 0, icon: CheckCircle, color: "text-amber-600", bg: "bg-amber-100" },
-    { label: "Total Tasks", value: summary?.totalTasks ?? 0, icon: ListChecks, color: "text-emerald-600", bg: "bg-emerald-100" },
-    { label: "Presentations", value: summary?.totalPresentations ?? 0, icon: Presentation, color: "text-sky-600", bg: "bg-sky-100" },
-    { label: "Time Saved (hrs)", value: summary?.estimatedTimeSavedHours?.toFixed(1) ?? "0", icon: Clock, color: "text-rose-600", bg: "bg-rose-100" },
+    { label: "Projects", value: summary?.totalProjects ?? 0, icon: FolderOpen, color: "text-primary", bg: "bg-primary/10", border: "border-primary/20", glow: "rgba(24,147,247,0.15)" },
+    { label: "Insights", value: summary?.totalInsights ?? 0, icon: Brain, color: "text-violet-500", bg: "bg-violet-500/10", border: "border-violet-500/20", glow: "rgba(139,92,246,0.12)" },
+    { label: "Approvals", value: summary?.pendingApprovals ?? 0, icon: CheckCircle, color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20", glow: "rgba(245,158,11,0.12)" },
+    { label: "Tasks", value: summary?.totalTasks ?? 0, icon: ListChecks, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20", glow: "rgba(16,185,129,0.12)" },
+    { label: "Decks", value: summary?.totalPresentations ?? 0, icon: Presentation, color: "text-sky-500", bg: "bg-sky-500/10", border: "border-sky-500/20", glow: "rgba(14,165,233,0.12)" },
+    { label: "Hrs Saved", value: summary?.estimatedTimeSavedHours ?? 0, icon: Clock, color: "text-rose-500", bg: "bg-rose-500/10", border: "border-rose-500/20", glow: "rgba(244,63,94,0.12)" },
   ];
 
   return (
     <DashboardLayout>
-      <div className="p-6 md:p-8 max-w-[1400px] mx-auto w-full">
-        <motion.div initial="hidden" animate="visible" custom={0} variants={fadeUp} className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+      <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
+
+        {/* Header */}
+        <motion.div {...springIn(0)} className="flex items-center justify-between mb-10">
           <div>
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-foreground to-foreground/60 pb-1 tracking-tight">Welcome to Mission Control</h1>
-            <p className="text-muted-foreground text-sm mt-1">Overview of your UX projects and AI agent activity</p>
+            <h1 className="text-3xl font-black text-foreground tracking-tighter">Dashboard</h1>
+            <p className="text-muted-foreground text-sm mt-1 font-medium">Your AI-powered UX pipeline overview</p>
           </div>
           <Link href="/projects/new">
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-primary/40 hover:-translate-y-0.5">
-              <Plus className="w-4 h-4 mr-2" />New Project
-            </Button>
+            <motion.div whileHover={{ scale: 1.04, y: -1 }} whileTap={{ scale: 0.97 }}>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-[0_4px_20px_rgba(24,147,247,0.3)] hover:shadow-[0_6px_28px_rgba(24,147,247,0.45)] transition-all">
+                <Plus className="w-4 h-4 mr-2" />New Project
+              </Button>
+            </motion.div>
           </Link>
         </motion.div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5 mb-12">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
           {statCards.map((card, i) => (
-            <motion.div key={card.label} initial="hidden" animate="visible" custom={i + 1} variants={fadeUp}>
-              <Card className="border-border/50 bg-card/60 backdrop-blur-sm shadow-sm hover:shadow-[0_8px_30px_rgba(24,147,247,0.12)] hover:border-primary/30 transition-all duration-300 relative overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent dark:from-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <CardContent className="p-5 relative z-10">
-                  <div className={`w-10 h-10 rounded-xl ${card.bg} flex items-center justify-center mb-4 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3`}>
-                    <card.icon className={`w-5 h-5 ${card.color}`} />
+            <motion.div key={card.label} {...springIn(i + 1)}>
+              <motion.div
+                whileHover={{ y: -5, boxShadow: `0 16px 40px ${card.glow}` }}
+                className={`relative overflow-hidden rounded-2xl border ${card.border} bg-card p-5 cursor-default group transition-all duration-300`}
+              >
+                {/* Shimmer on load */}
+                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/5 to-transparent transition-transform duration-700 ease-in-out pointer-events-none" />
+                <div className={`w-10 h-10 rounded-xl ${card.bg} border ${card.border} flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}>
+                  <card.icon className={`w-5 h-5 ${card.color}`} />
+                </div>
+                {summaryLoading ? (
+                  <Skeleton className="h-8 w-10 mb-1 rounded-lg" />
+                ) : (
+                  <div className={`text-3xl font-black font-mono tracking-tighter mb-1 ${card.color}`}>
+                    <AnimatedCounter value={typeof card.value === 'number' ? Math.round(card.value) : 0} />
                   </div>
-                  {summaryLoading ? (
-                    <Skeleton className="h-7 w-12 mb-1" />
-                  ) : (
-                    <div className="text-3xl font-bold text-foreground font-mono tracking-tight flex items-baseline gap-1">
-                      <Counter value={card.value} />
-                      {card.label.includes("hrs") && <span className="text-sm text-muted-foreground font-sans font-medium">h</span>}
-                    </div>
-                  )}
-                  <div className="text-xs font-bold text-muted-foreground mt-2 uppercase tracking-widest">{card.label.replace(" (hrs)", "")}</div>
-                </CardContent>
-              </Card>
+                )}
+                <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest font-mono">{card.label}</div>
+              </motion.div>
             </motion.div>
           ))}
         </div>
 
-        {/* Projects */}
-        <motion.div initial="hidden" animate="visible" custom={8} variants={fadeUp}>
-          <div className="flex items-center gap-2 mb-6">
-            <FolderOpen className="w-5 h-5 text-primary" />
-            <h2 className="text-xl font-bold text-foreground tracking-tight">Active Pipelines</h2>
+        {/* Projects Section */}
+        <motion.div {...springIn(8)}>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-black text-foreground tracking-tight">Your Projects</h2>
+            <Link href="/projects/new">
+              <span className="text-sm font-bold text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                New <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </Link>
           </div>
 
           {projectsLoading ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="animate-shimmer bg-card rounded-2xl h-56 border border-border/50" />
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-48 rounded-2xl bg-card border border-border animate-pulse overflow-hidden relative">
+                  <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer-slide" />
+                </div>
               ))}
             </div>
           ) : !projects || projects.length === 0 ? (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
-              <Card className="border-dashed border-2 border-primary/20 bg-primary/5">
-                <CardContent className="flex flex-col items-center justify-center py-24 text-center">
-                  <div className="relative mb-6">
-                    <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse-glow" />
-                    <div className="w-20 h-20 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center relative z-10 shadow-lg backdrop-blur-sm animate-float">
-                      <Sparkles className="w-10 h-10 text-primary" />
-                    </div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "spring", stiffness: 260, damping: 28 }}
+            >
+              <Card className="border-dashed border-2 border-border/60 bg-card/40 hover:border-primary/30 transition-colors duration-300">
+                <CardContent className="flex flex-col items-center justify-center py-20 text-center relative overflow-hidden">
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-primary/5 rounded-full blur-[80px] animate-breathe" />
                   </div>
-                  <h3 className="text-xl font-bold text-foreground mb-3 tracking-tight">No projects in orbit</h3>
-                  <p className="text-muted-foreground text-base mb-8 max-w-md">Initialize your first UX pipeline and let the agent swarm transform your inputs into structured outputs.</p>
+                  <motion.div
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+                    className="w-20 h-20 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(24,147,247,0.15)]"
+                  >
+                    <Brain className="w-10 h-10 text-primary" />
+                  </motion.div>
+                  <h3 className="text-foreground font-black text-xl mb-2 tracking-tight">No projects yet</h3>
+                  <p className="text-muted-foreground text-sm mb-8 max-w-sm font-medium leading-relaxed">
+                    Create your first project and let 12 AI agents transform your UX inputs into structured product outputs.
+                  </p>
                   <Link href="/projects/new">
-                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-12 px-8 shadow-lg shadow-primary/30 transition-all hover:scale-105">
-                      <Plus className="w-5 h-5 mr-2" />Initialize Pipeline
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.04, y: -1 }} whileTap={{ scale: 0.97 }}>
+                      <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-[0_4px_20px_rgba(24,147,247,0.3)] hover:shadow-[0_6px_28px_rgba(24,147,247,0.45)]">
+                        <Plus className="w-4 h-4 mr-2" />Create First Project
+                      </Button>
+                    </motion.div>
                   </Link>
                 </CardContent>
               </Card>
             </motion.div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
               {projects.map((project, i) => (
-                <motion.div key={project.id} initial="hidden" animate="visible" custom={i} variants={fadeUp} className="h-full">
-                  <Card
-                    className="glass-card cursor-pointer group h-full flex flex-col relative overflow-hidden"
+                <motion.div key={project.id} {...springIn(i)} className="h-full">
+                  <motion.div
+                    whileHover={{ y: -5, boxShadow: "0 20px 50px rgba(24,147,247,0.12)" }}
+                    className="cursor-pointer h-full"
                     onClick={() => setLocation(`/projects/${project.id}`)}
                   >
-                    {project.analysisStatus === "running" && (
-                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/40 via-primary to-primary/40 animate-[shimmer_2s_infinite]" />
-                    )}
-                    <CardHeader className="pb-4 pt-6 px-6">
-                      <div className="flex items-start justify-between gap-3">
-                        <CardTitle className="text-lg font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
-                          {project.name}
-                        </CardTitle>
-                        <StatusBadge status={project.analysisStatus ?? "pending"} />
-                      </div>
-                    </CardHeader>
-                    <CardContent className="flex flex-col flex-1 px-6 pb-6">
-                      {project.description && (
-                        <p className="text-muted-foreground text-sm mb-5 line-clamp-2 flex-1 leading-relaxed group-hover:text-muted-foreground/80 transition-colors">{project.description}</p>
-                      )}
-                      <div className="flex items-center gap-2 flex-wrap mt-auto mb-5">
-                        {project.industry && <Badge variant="secondary" className="text-[10px] font-mono font-medium uppercase tracking-wider bg-secondary/50">{project.industry}</Badge>}
-                        {project.productType && <Badge variant="secondary" className="text-[10px] font-mono font-medium uppercase tracking-wider bg-secondary/50">{project.productType}</Badge>}
-                      </div>
-                      <div className="flex items-center justify-between pt-5 border-t border-border/60">
-                        <span className="text-[11px] font-mono font-medium text-muted-foreground/70 uppercase tracking-widest">
-                          {new Date(project.createdAt ?? Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                        </span>
-                        <div className="flex items-center text-xs font-bold text-muted-foreground group-hover:text-primary transition-colors">
-                          Enter <ArrowRight className="w-4 h-4 ml-1.5 transform group-hover:translate-x-1 transition-transform" />
+                    <Card className="border border-border/60 bg-card hover:border-primary/30 shadow-sm transition-all duration-300 h-full flex flex-col group relative overflow-hidden">
+                      {/* Hover glow */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/0 group-hover:from-primary/3 group-hover:to-transparent transition-all duration-500 pointer-events-none" />
+                      {/* Top accent line */}
+                      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                      <CardContent className="p-6 flex flex-col flex-1 relative z-10">
+                        <div className="flex items-start justify-between gap-3 mb-4">
+                          <h3 className="font-black text-foreground text-base leading-tight group-hover:text-primary transition-colors duration-200 tracking-tight line-clamp-2">
+                            {project.name}
+                          </h3>
+                          <StatusBadge status={project.analysisStatus ?? "pending"} />
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+
+                        {project.description && (
+                          <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2 flex-1 font-medium">{project.description}</p>
+                        )}
+
+                        <div className="flex items-center gap-2 flex-wrap mt-4">
+                          {project.industry && (
+                            <Badge variant="secondary" className="text-[10px] font-black font-mono uppercase tracking-wider px-2.5 py-1">{project.industry}</Badge>
+                          )}
+                          {project.productType && (
+                            <Badge variant="secondary" className="text-[10px] font-black font-mono uppercase tracking-wider px-2.5 py-1">{project.productType}</Badge>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between mt-5 pt-4 border-t border-border/50">
+                          <span className="text-[11px] font-mono text-muted-foreground/70">
+                            {new Date(project.createdAt ?? Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </span>
+                          <div className="flex items-center gap-1 text-xs font-bold text-muted-foreground group-hover:text-primary transition-colors">
+                            Open
+                            <motion.span
+                              className="inline-block"
+                              animate={{ x: [0, 0] }}
+                              whileHover={{ x: 3 }}
+                            >
+                              <ArrowRight className="w-3.5 h-3.5 ml-0.5 group-hover:translate-x-0.5 transition-transform" />
+                            </motion.span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 </motion.div>
               ))}
 
               {/* New project card */}
-              <motion.div initial="hidden" animate="visible" custom={projects.length} variants={fadeUp}>
-                <Link href="/projects/new" className="block h-full">
-                  <Card className="border-dashed border-2 border-border/60 bg-transparent hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 cursor-pointer group h-full min-h-[240px]">
-                    <CardContent className="flex flex-col items-center justify-center h-full text-center py-8">
-                      <div className="w-14 h-14 rounded-full bg-secondary/80 flex items-center justify-center mb-5 group-hover:bg-primary group-hover:text-primary-foreground text-muted-foreground transition-all duration-300 shadow-sm group-hover:shadow-[0_0_20px_rgba(24,147,247,0.4)] group-hover:scale-110">
-                        <Plus className="w-6 h-6" />
-                      </div>
-                      <div className="text-base font-bold text-foreground group-hover:text-primary transition-colors">Initialize Pipeline</div>
-                      <p className="text-sm text-muted-foreground mt-2 font-medium">Add a new project</p>
-                    </CardContent>
-                  </Card>
+              <motion.div {...springIn(projects.length)}>
+                <Link href="/projects/new">
+                  <motion.div whileHover={{ y: -5 }} className="h-full min-h-[200px]">
+                    <Card className="border-dashed border-2 border-border/60 bg-transparent hover:border-primary/40 hover:bg-primary/3 transition-all duration-300 cursor-pointer group h-full">
+                      <CardContent className="flex flex-col items-center justify-center h-full text-center py-8">
+                        <motion.div
+                          className="w-14 h-14 rounded-2xl bg-secondary border border-border flex items-center justify-center mb-4 text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary group-hover:shadow-[0_0_20px_rgba(24,147,247,0.3)] transition-all duration-300"
+                          whileHover={{ rotate: 90 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                        >
+                          <Plus className="w-7 h-7" />
+                        </motion.div>
+                        <div className="text-sm font-black text-foreground group-hover:text-primary transition-colors tracking-tight">New Project</div>
+                        <p className="text-xs text-muted-foreground mt-1 font-medium">Start a new pipeline</p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 </Link>
               </motion.div>
             </div>

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useParams, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, FlaskConical, Target, Lightbulb, Route, Star, ListChecks, CheckCircle, Loader2, PlayCircle, ArrowRight, Sparkles, Badge } from "lucide-react";
+import { Brain, FlaskConical, Target, Lightbulb, Route, Star, ListChecks, CheckCircle, Loader2, PlayCircle, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { DashboardLayout } from "@/layouts/dashboard-layout";
 import { useRunAnalysis, useGetProject, getGetProjectQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";

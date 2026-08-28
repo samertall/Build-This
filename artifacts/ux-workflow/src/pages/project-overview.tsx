@@ -1,5 +1,5 @@
 import { useParams, Link } from "wouter";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { Brain, FlaskConical, Target, Lightbulb, Route, Star, ListChecks, Presentation, Database, ArrowRight, Loader2, AlertTriangle, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardLayout } from "@/layouts/dashboard-layout";
 import { useGetProject, useGetProjectStats } from "@workspace/api-client-react";
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: (i = 0) => ({ opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 30, delay: i * 0.06 } }),
 };

@@ -12,3 +12,5 @@ When asked to redesign/improve UI+UX across an entire multi-page app, a single D
 2. Split the remaining pages into a few parallel batches (e.g. by pipeline/section) and launch separate DESIGN subagents per batch, explicitly instructing them to remove old hardcoded color classes and replace with the new semantic tokens — do not assume they'll infer this without being told the new tokens exist and old ones must go.
 
 After all batches complete, grep for the old hardcoded color patterns (e.g. `grep -rlE "(bg|text|border)-(oldcolor)-[0-9]+"`) across all page files to confirm no leftovers, and run typecheck — mutation hook param name mismatches (e.g. `projectId` vs `id`) are a common latent bug that surfaces only once you finally run a typecheck after page edits.
+
+Framer Motion variant objects with spring transitions can lose literal typing when extracted into helpers. Use a `Variants` annotation or preserve `type: "spring" as const` so strict TypeScript accepts the props.

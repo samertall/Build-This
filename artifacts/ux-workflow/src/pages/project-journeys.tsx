@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardLayout } from "@/layouts/dashboard-layout";
+import { PageHeader, EmptyState, listContainer, listItem } from "@/components/page-header";
 import { useListJourneys } from "@workspace/api-client-react";
 
 type Stage = {
@@ -35,35 +36,28 @@ export default function ProjectJourneysPage() {
   return (
     <DashboardLayout projectId={projectId}>
       <div className="p-6 md:p-8 max-w-[1600px] mx-auto w-full">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4 border-b border-border/50 pb-6">
-          <div className="relative">
-            <div className="absolute -left-4 top-2 w-1 h-12 bg-indigo-500 rounded-r-full" />
-            <h1 className="text-3xl font-black text-foreground tracking-tighter">Journey & Flow</h1>
-            <p className="text-muted-foreground text-base mt-2 max-w-xl font-medium">Mapped user states with emotion curves and opportunity gaps.</p>
-          </div>
-        </div>
+        <PageHeader
+          icon={Route}
+          iconColor="text-indigo-500"
+          iconBg="bg-indigo-500/10 border-indigo-500/20"
+          accentColor="bg-indigo-500"
+          label="Journey Mapping"
+          title="Journeys & Flows"
+          description="Mapped user states with emotion curves and opportunity gaps."
+          count={journeys?.length}
+        />
 
         {isLoading ? (
-          <div className="space-y-8">{[1,2].map(i => <Skeleton key={i} className="h-[400px] rounded-3xl" />)}</div>
+          <div className="space-y-8">{[1,2].map(i => <div key={i} className="h-[400px] rounded-3xl bg-card border border-border animate-pulse" />)}</div>
         ) : !journeys || journeys.length === 0 ? (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-            <Card className="border-dashed border-2 border-border bg-card/30 shadow-none">
-              <CardContent className="flex flex-col items-center justify-center py-24 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-6 shadow-sm border border-indigo-500/20">
-                  <Route className="w-8 h-8 text-indigo-500" />
-                </div>
-                <h3 className="font-black text-2xl text-foreground mb-3 tracking-tight">No journeys mapped</h3>
-                <p className="text-muted-foreground text-base max-w-md font-medium">Run the Journey & Flow agent to generate current and future state maps.</p>
-              </CardContent>
-            </Card>
-          </motion.div>
+          <EmptyState icon={Route} title="No journeys mapped" description="Run the Journey & Flow agent to generate current and future state maps." />
         ) : (
-          <div className="space-y-12">
+          <motion.div variants={listContainer} initial="hidden" animate="visible" className="space-y-12">
             {journeys.map((journey, ji) => {
               const stages = (journey.stages as unknown as Stage[]) ?? [];
               const isFuture = journey.journeyType === "future";
               return (
-                <motion.div key={journey.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: ji * 0.1, type: "spring", stiffness: 300, damping: 30 }}>
+                <motion.div key={journey.id} variants={listItem}>
                   <Card className="border-2 border-border/60 bg-card overflow-hidden shadow-sm glass-card rounded-3xl group">
                     <CardHeader className={`border-b border-border/50 pb-6 pt-6 px-8 relative overflow-hidden ${isFuture ? 'bg-primary/5' : 'bg-secondary/30'}`}>
                       <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-[80px] pointer-events-none opacity-50 ${isFuture ? 'bg-primary/20' : 'bg-foreground/5'}`} />
@@ -89,7 +83,7 @@ export default function ProjectJourneysPage() {
                           <div className="flex min-w-max pb-4">
                             {stages.map((stage, si) => (
                               <div key={si} className="flex relative">
-                                <div className="w-80 flex-shrink-0 bg-background border border-border/60 rounded-2xl p-6 transition-all duration-300 hover:border-primary/30 hover:shadow-md relative z-10 mx-2 flex flex-col">
+                                  <motion.div whileHover={{ y: -5, boxShadow: "0 16px 38px rgba(24,147,247,0.12)" }} transition={{ type: "spring", stiffness: 300, damping: 24 }} className="w-80 flex-shrink-0 bg-background border border-border/60 rounded-2xl p-6 relative z-10 mx-2 flex flex-col">
                                   <div className="flex items-center gap-3 mb-6">
                                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black font-mono shadow-sm ${isFuture ? 'bg-primary text-primary-foreground' : 'bg-foreground text-background'}`}>
                                       {si + 1}
@@ -142,7 +136,7 @@ export default function ProjectJourneysPage() {
                                       </ul>
                                     </div>
                                   )}
-                                </div>
+                                </motion.div>
                                 
                                 {si < stages.length - 1 && (
                                   <div className="flex items-center px-0 relative z-0">
@@ -162,7 +156,7 @@ export default function ProjectJourneysPage() {
                 </motion.div>
               );
             })}
-          </div>
+          </motion.div>
         )}
       </div>
     </DashboardLayout>
