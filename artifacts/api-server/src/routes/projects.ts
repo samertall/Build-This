@@ -30,8 +30,8 @@ import { requireOwnedProject } from "../middlewares/auth";
 
 const router = Router();
 
-// Dashboard
-router.get("/dashboard", async (req, res) => {
+// Dashboard summary
+router.get("/dashboard/summary", async (req, res) => {
   try {
     const ownerId = req.userId!;
     const projectScope = eq(projectsTable.ownerId, ownerId);
