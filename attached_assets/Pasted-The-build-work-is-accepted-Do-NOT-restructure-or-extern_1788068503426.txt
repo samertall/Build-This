@@ -1,0 +1,92 @@
+The build work is accepted. Do NOT restructure or externalize the 3 MB API bundle just to remove the esbuild advisory. Keep the current production packaging unless you discover an actual runtime or deployment problem.
+
+I now want you to focus exclusively on authenticated Clerk security and project ownership.
+
+First, inspect the implementation without making unnecessary architectural changes.
+
+Verify in the source code that every authenticated project API endpoint enforces BOTH:
+
+A valid Clerk-authenticated user.
+Server-side ownership of the requested project.
+
+Do not rely on frontend route protection or hidden UI controls for authorization.
+
+Audit all project-related endpoints, including:
+
+create project
+list projects
+get project
+update project
+delete project
+project overview
+project sources
+project problems
+project features
+project journeys
+project tasks
+project insights
+project recommendations
+project presentations
+project analysis
+
+For every endpoint that accepts a project ID, verify that the database query is scoped to the authenticated Clerk user ID.
+
+The security model should effectively require:
+
+project.id = requestedProjectId
+AND
+project.userId = authenticatedClerkUserId
+
+A logged-in user must never be able to obtain another user's project by changing an ID in the URL, request body, query string, or API request.
+
+Also verify that project creation always assigns ownership from the authenticated Clerk session server-side. Do not trust a userId submitted by the browser.
+
+Check that update/delete operations cannot change project ownership.
+
+Then inspect the database schema and confirm the ownership field is indexed appropriately.
+
+If there is currently any authorization weakness, fix it.
+
+Afterward run:
+
+pnpm run typecheck
+pnpm run build
+
+Confirm both still pass.
+
+Since you previously stated that you cannot perform an interactive authenticated Clerk browser session, do NOT falsely mark the complete signed-in workflow as tested.
+
+Instead give me:
+
+every authenticated project endpoint you audited
+where authentication is enforced
+where ownership is enforced
+which files you changed
+any security vulnerabilities you found
+confirmation that unauthenticated requests still return 401
+confirmation that cross-user access should return either 403 or 404
+confirmation that the production build still succeeds
+any portions that still require me to test manually
+
+Do not spend time trying to eliminate the harmless 3 MB server bundle advisory.
+
+Then you should manually perform one final test yourself in the actual app:
+
+Create/login as User A.
+Create a project.
+Copy its project URL/ID.
+Sign out.
+Sign in as User B.
+Paste User A's project URL.
+
+The correct result should be something like:
+
+404 Not Found
+
+or:
+
+403 Forbidden
+
+User B must never see User A's data.
+
+If that passes together with create → save → refresh → logout → login → reopen, I'd consider the authentication/project workflow ready from this particular perspective.
