@@ -520,7 +520,13 @@ export default function LandingPage() {
 
       {/* ── CTA ── */}
       <section className="py-36 px-6 bg-foreground text-background relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.015] pointer-events-none" style={{ backgroundImage: "url('https://grainy-gradients.vercel.app/noise.svg')" }} />
+        <div
+          className="absolute inset-0 opacity-[0.06] pointer-events-none"
+          style={{
+            backgroundImage: "radial-gradient(rgba(255,255,255,.14) 1px, transparent 1px)",
+            backgroundSize: "18px 18px",
+          }}
+        />
         <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-primary/30 rounded-full blur-[150px] animate-breathe" />
         <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[400px] h-[400px] bg-indigo-500/20 rounded-full blur-[140px] animate-breathe" style={{ animationDelay: '-2s' }} />
 

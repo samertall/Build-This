@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/reac
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
+import { basePath } from "@/lib/routing";
 
 import LandingPage from "@/pages/landing";
 const SignInPage = lazy(() => import("@/pages/sign-in"));
@@ -32,8 +33,6 @@ const clerkPubKey = publishableKeyFromHost(
 );
 
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
-
-const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 function stripBase(path: string): string {
   return basePath && path.startsWith(basePath)

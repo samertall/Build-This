@@ -1,6 +1,7 @@
 import { SignIn } from "@clerk/react";
 import { motion } from "framer-motion";
 import { Brain, Layers, CheckCircle, Zap, ArrowRight } from "lucide-react";
+import { basePath } from "@/lib/routing";
 
 const features = [
   { icon: Brain, label: "12 AI Agents", desc: "Running in parallel" },
@@ -10,7 +11,6 @@ const features = [
 ];
 
 export default function SignInPage() {
-  const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
   return (
     <div className="flex min-h-[100dvh] bg-background font-sans overflow-hidden">
       {/* Left brand panel */}
@@ -32,7 +32,7 @@ export default function SignInPage() {
         {/* Logo */}
         <div className="relative z-10">
           <motion.a
-            href="/"
+            href={basePath || "/"}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
