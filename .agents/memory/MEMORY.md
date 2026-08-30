@@ -1,1 +1,2 @@
 - [Design subagent full-app redesign](design-subagent-redesign.md) — split redesign into foundation pass + parallel page batches; watch for hardcoded legacy colors surviving in individual pages.
+- [Same-origin API and reproducible builds](same-origin-api-builds.md) — keep API CORS restrictive and let static Vite builds run without workflow-only environment variables.
