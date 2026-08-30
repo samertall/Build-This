@@ -1,0 +1,88 @@
+I need you to audit and fix the remaining build warnings and verify the authenticated project workflow in this application.
+The app currently builds successfully, but there are two non-blocking warnings:
+Existing source-map warnings coming from some UI primitives/dependencies.
+A bundle-size warning recommending code splitting.
+There is also an important limitation: authenticated project workflows have not yet been fully tested with a real signed-in Clerk user session.
+Please do the following carefully:
+1. Inspect the project before changing anything
+Identify the framework, bundler, routing structure, Clerk integration, backend/API structure, and database integration.
+Run the current production build and capture the exact warnings.
+Identify exactly which files/packages generate the source-map warnings.
+Identify which generated JavaScript chunks trigger the bundle-size warning.
+Do not make unnecessary architectural changes.
+2. Fix or properly handle the source-map warnings
+Determine whether the warnings originate from my source code or third-party packages in node_modules.
+If they originate from my code, fix the incorrect source-map configuration.
+If they originate from third-party UI libraries, update the affected packages to compatible stable versions where safe.
+Do NOT edit files directly inside node_modules.
+Do NOT simply hide legitimate errors.
+If production source maps are unnecessary, configure the production build appropriately so source maps do not generate avoidable warnings.
+Preserve development debugging functionality.
+3. Fix the bundle-size warning properly
+Analyze the production bundle and identify the largest dependencies/routes/components.
+Implement route-level or component-level lazy loading where appropriate.
+Use dynamic import() / React lazy() and Suspense where appropriate.
+Split large features such as dashboards, project editors, analytics, charts, AI tools, PDF/rendering libraries, rich text editors, or other heavy modules if they exist.
+Configure Vite/Rollup manualChunks only where it improves the bundle architecture.
+Avoid placing the entire node_modules directory into one huge vendor chunk.
+Do NOT solve the warning merely by increasing chunkSizeWarningLimit.
+Preserve all existing functionality and UI.
+4. Audit Clerk authentication
+Confirm the frontend uses the Clerk publishable key correctly.
+Confirm the Clerk secret key is server-side only and is never exposed to the browser.
+Verify all environment variable names are correct for this project's framework.
+Verify protected routes correctly require authentication.
+Verify API requests that require authentication receive and validate the Clerk session/token.
+Verify API routes cannot access another user's project by changing a project ID manually.
+Ensure project ownership is validated server-side, not only in the frontend.
+5. Test the complete authenticated project workflow
+Test this sequence with a real authenticated test account:
+Sign up/sign in → Dashboard → Create project → Open project → Edit project → Save → Refresh browser → Confirm saved data → Return to project list → Open project again → Sign out → Sign back in → Confirm project still exists and belongs to the correct user
+Also test:
+unauthenticated access to protected pages
+expired/invalid sessions
+direct URL access to a protected project
+attempting to access a project belonging to another user
+API failures
+loading states
+empty states
+error states
+6. Check API responses
+Inspect the browser/network and server logs for:
+200
+201
+400
+401
+403
+404
+500
+Resolve unexpected 401, 403, or 500 errors rather than suppressing them.
+7. Run final quality checks
+Run the appropriate commands for this repository, including where available:
+npm install
+npm run typecheck
+npm run lint
+npm test
+npm run build
+Do not introduce TypeScript errors, lint errors, broken imports, runtime console errors, or regressions.
+8. Do not make destructive changes
+Do not remove existing working features.
+Do not reset or delete the database.
+Do not replace Clerk authentication.
+Do not expose secrets.
+Do not modify production data unnecessarily.
+Do not change the visual design unless required for loading/error states.
+9. At the end, give me a clear report
+Tell me:
+What caused each original warning
+Which files you changed
+Which packages you updated
+What code splitting you implemented
+Bundle size before and after
+Whether the source-map warnings are completely resolved
+Whether the bundle-size warning is completely resolved
+Whether Clerk authentication was verified
+Whether project creation/read/update persistence works
+Whether user/project authorization is secure
+Any remaining warnings or limitations
+Important: Do not tell me the warnings are harmless without investigating them. Inspect the actual repository, make the appropriate fixes, run the application, run the production build, and verify the result before reporting success.

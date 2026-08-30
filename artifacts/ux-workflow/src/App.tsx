@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import { ClerkProvider, SignIn, SignUp, Show, useClerk } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { shadcn } from "@clerk/themes";
@@ -9,20 +9,20 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 
 import LandingPage from "@/pages/landing";
-import SignInPage from "@/pages/sign-in";
-import SignUpPage from "@/pages/sign-up";
-import DashboardPage from "@/pages/dashboard";
-import NewProjectPage from "@/pages/project-new";
-import ProjectOverviewPage from "@/pages/project-overview";
-import ProjectSourcesPage from "@/pages/project-sources";
-import ProjectAnalyzePage from "@/pages/project-analyze";
-import ProjectInsightsPage from "@/pages/project-insights";
-import ProjectProblemsPage from "@/pages/project-problems";
-import ProjectRecommendationsPage from "@/pages/project-recommendations";
-import ProjectJourneysPage from "@/pages/project-journeys";
-import ProjectFeaturesPage from "@/pages/project-features";
-import ProjectTasksPage from "@/pages/project-tasks";
-import ProjectPresentationsPage from "@/pages/project-presentations";
+const SignInPage = lazy(() => import("@/pages/sign-in"));
+const SignUpPage = lazy(() => import("@/pages/sign-up"));
+const DashboardPage = lazy(() => import("@/pages/dashboard"));
+const NewProjectPage = lazy(() => import("@/pages/project-new"));
+const ProjectOverviewPage = lazy(() => import("@/pages/project-overview"));
+const ProjectSourcesPage = lazy(() => import("@/pages/project-sources"));
+const ProjectAnalyzePage = lazy(() => import("@/pages/project-analyze"));
+const ProjectInsightsPage = lazy(() => import("@/pages/project-insights"));
+const ProjectProblemsPage = lazy(() => import("@/pages/project-problems"));
+const ProjectRecommendationsPage = lazy(() => import("@/pages/project-recommendations"));
+const ProjectJourneysPage = lazy(() => import("@/pages/project-journeys"));
+const ProjectFeaturesPage = lazy(() => import("@/pages/project-features"));
+const ProjectTasksPage = lazy(() => import("@/pages/project-tasks"));
+const ProjectPresentationsPage = lazy(() => import("@/pages/project-presentations"));
 
 const queryClient = new QueryClient();
 
@@ -147,24 +147,26 @@ function ClerkProviderWithRoutes() {
         <ClerkQueryClientCacheInvalidator />
         <TooltipProvider>
           <Switch>
-            <Route path="/" component={HomeRedirect} />
-            <Route path="/sign-in/*?" component={SignInPage} />
-            <Route path="/sign-up/*?" component={SignUpPage} />
-            
-            <Route path="/dashboard"><ProtectedRoute component={DashboardPage} /></Route>
-            <Route path="/projects/new"><ProtectedRoute component={NewProjectPage} /></Route>
-            <Route path="/projects/:id"><ProtectedRoute component={ProjectOverviewPage} /></Route>
-            <Route path="/projects/:id/sources"><ProtectedRoute component={ProjectSourcesPage} /></Route>
-            <Route path="/projects/:id/analyze"><ProtectedRoute component={ProjectAnalyzePage} /></Route>
-            <Route path="/projects/:id/insights"><ProtectedRoute component={ProjectInsightsPage} /></Route>
-            <Route path="/projects/:id/problems"><ProtectedRoute component={ProjectProblemsPage} /></Route>
-            <Route path="/projects/:id/recommendations"><ProtectedRoute component={ProjectRecommendationsPage} /></Route>
-            <Route path="/projects/:id/journeys"><ProtectedRoute component={ProjectJourneysPage} /></Route>
-            <Route path="/projects/:id/features"><ProtectedRoute component={ProjectFeaturesPage} /></Route>
-            <Route path="/projects/:id/tasks"><ProtectedRoute component={ProjectTasksPage} /></Route>
-            <Route path="/projects/:id/presentations"><ProtectedRoute component={ProjectPresentationsPage} /></Route>
+            <Suspense fallback={<div className="min-h-screen bg-background" />}>
+              <Route path="/" component={HomeRedirect} />
+              <Route path="/sign-in/*?" component={SignInPage} />
+              <Route path="/sign-up/*?" component={SignUpPage} />
 
-            <Route component={NotFound} />
+              <Route path="/dashboard"><ProtectedRoute component={DashboardPage} /></Route>
+              <Route path="/projects/new"><ProtectedRoute component={NewProjectPage} /></Route>
+              <Route path="/projects/:id"><ProtectedRoute component={ProjectOverviewPage} /></Route>
+              <Route path="/projects/:id/sources"><ProtectedRoute component={ProjectSourcesPage} /></Route>
+              <Route path="/projects/:id/analyze"><ProtectedRoute component={ProjectAnalyzePage} /></Route>
+              <Route path="/projects/:id/insights"><ProtectedRoute component={ProjectInsightsPage} /></Route>
+              <Route path="/projects/:id/problems"><ProtectedRoute component={ProjectProblemsPage} /></Route>
+              <Route path="/projects/:id/recommendations"><ProtectedRoute component={ProjectRecommendationsPage} /></Route>
+              <Route path="/projects/:id/journeys"><ProtectedRoute component={ProjectJourneysPage} /></Route>
+              <Route path="/projects/:id/features"><ProtectedRoute component={ProjectFeaturesPage} /></Route>
+              <Route path="/projects/:id/tasks"><ProtectedRoute component={ProjectTasksPage} /></Route>
+              <Route path="/projects/:id/presentations"><ProtectedRoute component={ProjectPresentationsPage} /></Route>
+
+              <Route component={NotFound} />
+            </Suspense>
           </Switch>
           <Toaster />
         </TooltipProvider>

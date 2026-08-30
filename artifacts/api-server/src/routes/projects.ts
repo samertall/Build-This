@@ -11,7 +11,7 @@ import {
   tasksTable,
   presentationsTable,
 } from "@workspace/db";
-import { eq, count, and } from "drizzle-orm";
+import { eq, count, and, inArray } from "drizzle-orm";
 import {
   CreateProjectBody,
   UpdateProjectBody,
@@ -26,21 +26,25 @@ import {
   GeneratePresentationBody,
 } from "@workspace/api-zod";
 import { runFullAnalysis } from "../lib/agents";
+import { requireOwnedProject } from "../middlewares/auth";
 
 const router = Router();
 
 // Dashboard
 router.get("/dashboard", async (req, res) => {
   try {
-    const [tProjects] = await db.select({ count: count() }).from(projectsTable);
-    const [aProjects] = await db.select({ count: count() }).from(projectsTable).where(eq(projectsTable.status, "active"));
-    const [tInsights] = await db.select({ count: count() }).from(researchInsightsTable);
-    const [tTasks] = await db.select({ count: count() }).from(tasksTable);
-    const [pendingI] = await db.select({ count: count() }).from(researchInsightsTable).where(eq(researchInsightsTable.approvalStatus, "pending"));
-    const [pendingP] = await db.select({ count: count() }).from(problemStatementsTable).where(eq(problemStatementsTable.approvalStatus, "pending"));
-    const [pendingR] = await db.select({ count: count() }).from(recommendationsTable).where(eq(recommendationsTable.approvalStatus, "pending"));
-    const [tPres] = await db.select({ count: count() }).from(presentationsTable);
-    const recentProjects = await db.select().from(projectsTable).orderBy(projectsTable.updatedAt).limit(5);
+    const ownerId = req.userId!;
+    const projectScope = eq(projectsTable.ownerId, ownerId);
+    const ownedProjectIds = db.select({ id: projectsTable.id }).from(projectsTable).where(projectScope);
+    const [tProjects] = await db.select({ count: count() }).from(projectsTable).where(projectScope);
+    const [aProjects] = await db.select({ count: count() }).from(projectsTable).where(and(projectScope, eq(projectsTable.status, "active")));
+    const [tInsights] = await db.select({ count: count() }).from(researchInsightsTable).where(inArray(researchInsightsTable.projectId, ownedProjectIds));
+    const [tTasks] = await db.select({ count: count() }).from(tasksTable).where(inArray(tasksTable.projectId, ownedProjectIds));
+    const [pendingI] = await db.select({ count: count() }).from(researchInsightsTable).where(and(inArray(researchInsightsTable.projectId, ownedProjectIds), eq(researchInsightsTable.approvalStatus, "pending")));
+    const [pendingP] = await db.select({ count: count() }).from(problemStatementsTable).where(and(inArray(problemStatementsTable.projectId, ownedProjectIds), eq(problemStatementsTable.approvalStatus, "pending")));
+    const [pendingR] = await db.select({ count: count() }).from(recommendationsTable).where(and(inArray(recommendationsTable.projectId, ownedProjectIds), eq(recommendationsTable.approvalStatus, "pending")));
+    const [tPres] = await db.select({ count: count() }).from(presentationsTable).where(inArray(presentationsTable.projectId, ownedProjectIds));
+    const recentProjects = await db.select().from(projectsTable).where(projectScope).orderBy(projectsTable.updatedAt).limit(5);
     res.json({
       totalProjects: Number(tProjects.count),
       activeProjects: Number(aProjects.count),
@@ -60,7 +64,7 @@ router.get("/dashboard", async (req, res) => {
 // Projects list
 router.get("/projects", async (req, res) => {
   try {
-    const projects = await db.select().from(projectsTable).orderBy(projectsTable.updatedAt);
+    const projects = await db.select().from(projectsTable).where(eq(projectsTable.ownerId, req.userId!)).orderBy(projectsTable.updatedAt);
     res.json(projects);
   } catch (err) {
     req.log.error({ err }, "Failed to list projects");
@@ -75,6 +79,7 @@ router.post("/projects", async (req, res) => {
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
     const [project] = await db.insert(projectsTable).values({
       ...parsed.data,
+      ownerId: req.userId!,
       status: "active",
       analysisStatus: "pending",
     }).returning();
@@ -85,13 +90,12 @@ router.post("/projects", async (req, res) => {
   }
 });
 
+router.use("/projects/:id", requireOwnedProject);
+
 // Get project
 router.get("/projects/:id", async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const [project] = await db.select().from(projectsTable).where(eq(projectsTable.id, id));
-    if (!project) { res.status(404).json({ error: "Not found" }); return; }
-    res.json(project);
+    res.json(req.project);
   } catch (err) {
     req.log.error({ err }, "Failed to get project");
     res.status(500).json({ error: "Internal server error" });
@@ -106,7 +110,7 @@ router.patch("/projects/:id", async (req, res) => {
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
     const [project] = await db.update(projectsTable)
       .set({ ...parsed.data, updatedAt: new Date() })
-      .where(eq(projectsTable.id, id))
+      .where(and(eq(projectsTable.id, id), eq(projectsTable.ownerId, req.userId!)))
       .returning();
     if (!project) { res.status(404).json({ error: "Not found" }); return; }
     res.json(project);
@@ -120,7 +124,7 @@ router.patch("/projects/:id", async (req, res) => {
 router.delete("/projects/:id", async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    await db.delete(projectsTable).where(eq(projectsTable.id, id));
+    await db.delete(projectsTable).where(and(eq(projectsTable.id, id), eq(projectsTable.ownerId, req.userId!)));
     res.status(204).send();
   } catch (err) {
     req.log.error({ err }, "Failed to delete project");
@@ -192,8 +196,12 @@ router.post("/projects/:id/sources", async (req, res) => {
 
 router.delete("/projects/:id/sources/:sourceId", async (req, res) => {
   try {
+    const id = parseInt(req.params.id);
     const sourceId = parseInt(req.params.sourceId);
-    await db.delete(projectSourcesTable).where(eq(projectSourcesTable.id, sourceId));
+    const deleted = await db.delete(projectSourcesTable)
+      .where(and(eq(projectSourcesTable.id, sourceId), eq(projectSourcesTable.projectId, id)))
+      .returning({ id: projectSourcesTable.id });
+    if (deleted.length === 0) { res.status(404).json({ error: "Not found" }); return; }
     res.status(204).send();
   } catch (err) {
     req.log.error({ err }, "Failed to delete source");
@@ -207,16 +215,15 @@ router.post("/projects/:id/analyze", async (req, res) => {
     const id = parseInt(req.params.id);
     const parsed = RunAnalysisBody.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
-    const [project] = await db.select().from(projectsTable).where(eq(projectsTable.id, id));
-    if (!project) { res.status(404).json({ error: "Not found" }); return; }
+    const project = req.project!;
     const sources = await db.select().from(projectSourcesTable).where(eq(projectSourcesTable.projectId, id));
-    await db.update(projectsTable).set({ analysisStatus: "running", updatedAt: new Date() }).where(eq(projectsTable.id, id));
+    await db.update(projectsTable).set({ analysisStatus: "running", updatedAt: new Date() }).where(and(eq(projectsTable.id, id), eq(projectsTable.ownerId, req.userId!)));
     const result = await runFullAnalysis(project, sources, parsed.data.agentTypes);
-    await db.update(projectsTable).set({ analysisStatus: "complete", updatedAt: new Date() }).where(eq(projectsTable.id, id));
+    await db.update(projectsTable).set({ analysisStatus: "complete", updatedAt: new Date() }).where(and(eq(projectsTable.id, id), eq(projectsTable.ownerId, req.userId!)));
     res.json(result);
   } catch (err) {
     req.log.error({ err }, "Failed to run analysis");
-    await db.update(projectsTable).set({ analysisStatus: "error", updatedAt: new Date() }).where(eq(projectsTable.id, parseInt(req.params.id)));
+    await db.update(projectsTable).set({ analysisStatus: "error", updatedAt: new Date() }).where(and(eq(projectsTable.id, parseInt(req.params.id)), eq(projectsTable.ownerId, req.userId!)));
     res.status(500).json({ error: "Analysis failed" });
   }
 });
@@ -240,8 +247,9 @@ router.post("/projects/:id/insights/:insightId/approve", async (req, res) => {
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
     const [insight] = await db.update(researchInsightsTable)
       .set({ approvalStatus: parsed.data.status })
-      .where(eq(researchInsightsTable.id, insightId))
+      .where(and(eq(researchInsightsTable.id, insightId), eq(researchInsightsTable.projectId, parseInt(req.params.id))))
       .returning();
+    if (!insight) { res.status(404).json({ error: "Not found" }); return; }
     res.json(insight);
   } catch (err) {
     req.log.error({ err }, "Failed to approve insight");
@@ -268,8 +276,9 @@ router.post("/projects/:id/problems/:problemId/approve", async (req, res) => {
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
     const [problem] = await db.update(problemStatementsTable)
       .set({ approvalStatus: parsed.data.status })
-      .where(eq(problemStatementsTable.id, problemId))
+      .where(and(eq(problemStatementsTable.id, problemId), eq(problemStatementsTable.projectId, parseInt(req.params.id))))
       .returning();
+    if (!problem) { res.status(404).json({ error: "Not found" }); return; }
     res.json(problem);
   } catch (err) {
     req.log.error({ err }, "Failed to approve problem");
@@ -296,8 +305,9 @@ router.post("/projects/:id/recommendations/:recId/approve", async (req, res) => 
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
     const [rec] = await db.update(recommendationsTable)
       .set({ approvalStatus: parsed.data.status })
-      .where(eq(recommendationsTable.id, recId))
+      .where(and(eq(recommendationsTable.id, recId), eq(recommendationsTable.projectId, parseInt(req.params.id))))
       .returning();
+    if (!rec) { res.status(404).json({ error: "Not found" }); return; }
     res.json(rec);
   } catch (err) {
     req.log.error({ err }, "Failed to approve recommendation");
@@ -364,7 +374,11 @@ router.patch("/projects/:id/features/:featureId", async (req, res) => {
     }
     const updateData: Record<string, unknown> = { ...data };
     if (riceScore !== undefined) updateData.riceScore = riceScore;
-    const [feature] = await db.update(featuresTable).set(updateData).where(eq(featuresTable.id, featureId)).returning();
+    const [feature] = await db.update(featuresTable)
+      .set(updateData)
+      .where(and(eq(featuresTable.id, featureId), eq(featuresTable.projectId, parseInt(req.params.id))))
+      .returning();
+    if (!feature) { res.status(404).json({ error: "Not found" }); return; }
     res.json(feature);
   } catch (err) {
     req.log.error({ err }, "Failed to update feature");
@@ -389,7 +403,11 @@ router.patch("/projects/:id/tasks/:taskId", async (req, res) => {
     const taskId = parseInt(req.params.taskId);
     const parsed = UpdateTaskBody.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
-    const [task] = await db.update(tasksTable).set(parsed.data).where(eq(tasksTable.id, taskId)).returning();
+    const [task] = await db.update(tasksTable)
+      .set(parsed.data)
+      .where(and(eq(tasksTable.id, taskId), eq(tasksTable.projectId, parseInt(req.params.id))))
+      .returning();
+    if (!task) { res.status(404).json({ error: "Not found" }); return; }
     res.json(task);
   } catch (err) {
     req.log.error({ err }, "Failed to update task");
@@ -414,8 +432,7 @@ router.post("/projects/:id/presentations", async (req, res) => {
     const id = parseInt(req.params.id);
     const parsed = GeneratePresentationBody.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
-    const [project] = await db.select().from(projectsTable).where(eq(projectsTable.id, id));
-    if (!project) { res.status(404).json({ error: "Not found" }); return; }
+    const project = req.project!;
     const insights = await db.select().from(researchInsightsTable).where(and(eq(researchInsightsTable.projectId, id), eq(researchInsightsTable.approvalStatus, "approved")));
     const problems = await db.select().from(problemStatementsTable).where(eq(problemStatementsTable.projectId, id));
     const recs = await db.select().from(recommendationsTable).where(eq(recommendationsTable.projectId, id));
