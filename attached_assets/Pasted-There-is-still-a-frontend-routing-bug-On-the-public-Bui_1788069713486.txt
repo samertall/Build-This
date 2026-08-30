@@ -1,0 +1,88 @@
+There is still a frontend routing bug.
+
+On the public Build This landing page, the entire homepage renders correctly, but a 404 Page Not Found component appears underneath the homepage/footer.
+
+This should NOT be there.
+
+Please investigate the actual React/Vite routing configuration before changing anything.
+
+What to inspect
+Inspect the complete frontend route tree.
+Find the NotFound, 404, wildcard *, or catch-all route.
+Check whether the 404 component is accidentally being rendered inside:
+the landing page
+the root layout
+an <Outlet />
+a shared layout component
+a nested wildcard route
+Check whether both the homepage and wildcard route are matching/rendering simultaneously.
+Inspect every landing-page CTA/link, especially:
+Start Free
+Start AI UX Project
+View the Demo
+Initialize Workspace
+Return to Dashboard
+Confirm each link points to a route that actually exists.
+Expected behavior
+
+/
+
+must render only the public landing page.
+
+A genuine unknown URL such as:
+
+/this-route-does-not-exist
+
+should render the 404 page.
+
+The 404 component must NEVER appear underneath a valid page.
+
+Authenticated application routes such as dashboard/project routes must continue working normally.
+
+Important
+
+Do NOT modify:
+
+Clerk authentication architecture
+project ownership/security logic
+API endpoints
+database schema
+the accepted 3 MB API bundle
+
+unless you discover that they are directly responsible for this specific issue.
+
+Make the smallest routing fix necessary.
+
+After fixing it, test
+
+Test these scenarios individually:
+
+Open / directly → homepage only, NO 404.
+Refresh / → homepage only.
+Click every homepage CTA → correct destination, NO accidental 404.
+Open the dashboard while authenticated → dashboard loads.
+Refresh the dashboard → dashboard still loads.
+Open a valid project URL → project loads.
+Refresh a valid project URL → project still loads.
+Open a deliberately invalid URL → 404 page appears by itself.
+Browser console → no new routing/runtime errors.
+
+Run:
+
+pnpm run typecheck
+pnpm run build
+
+Both must still pass.
+
+At the end tell me:
+
+the exact cause of the 404
+which route/component was responsible
+which file(s) you changed
+the route configuration before and after
+whether / now renders without the 404
+whether direct URL refresh works
+whether all landing-page CTA links were verified
+whether typecheck and production build still pass
+
+Do not simply hide the 404 with CSS. Fix the routing cause.

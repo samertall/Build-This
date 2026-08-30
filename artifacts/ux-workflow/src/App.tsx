@@ -145,8 +145,8 @@ function ClerkProviderWithRoutes() {
       <QueryClientProvider client={queryClient}>
         <ClerkQueryClientCacheInvalidator />
         <TooltipProvider>
-          <Switch>
-            <Suspense fallback={<div className="min-h-screen bg-background" />}>
+          <Suspense fallback={<div className="min-h-screen bg-background" />}>
+            <Switch>
               <Route path="/" component={HomeRedirect} />
               <Route path="/sign-in/*?" component={SignInPage} />
               <Route path="/sign-up/*?" component={SignUpPage} />
@@ -165,8 +165,8 @@ function ClerkProviderWithRoutes() {
               <Route path="/projects/:id/presentations"><ProtectedRoute component={ProjectPresentationsPage} /></Route>
 
               <Route component={NotFound} />
-            </Suspense>
-          </Switch>
+            </Switch>
+          </Suspense>
           <Toaster />
         </TooltipProvider>
       </QueryClientProvider>
