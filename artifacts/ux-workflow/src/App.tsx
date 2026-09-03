@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { basePath } from "@/lib/routing";
+import { PresentationOrderTestPage } from "@/pages/project-presentations";
 
 import LandingPage from "@/pages/landing";
 const SignInPage = lazy(() => import("@/pages/sign-in"));
@@ -27,6 +28,8 @@ const ProjectTasksPage = lazy(() => import("@/pages/project-tasks"));
 const ProjectPresentationsPage = lazy(() => import("@/pages/project-presentations"));
 
 const queryClient = new QueryClient();
+const presentationOrderTestMode =
+  import.meta.env.VITE_PRESENTATION_ORDER_TEST_MODE === "true";
 
 const clerkPubKey = publishableKeyFromHost(
   window.location.hostname,
@@ -41,7 +44,7 @@ function stripBase(path: string): string {
     : path;
 }
 
-if (!clerkPubKey) {
+if (!clerkPubKey && !presentationOrderTestMode) {
   throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY in .env file");
 }
 
@@ -178,6 +181,18 @@ function ClerkProviderWithRoutes() {
   );
 }
 
+function PresentationOrderTestRoutes() {
+  return (
+    <Switch>
+      <Route
+        path="/projects/:id/presentations"
+        component={PresentationOrderTestPage}
+      />
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+
 function App() {
   useEffect(() => {
     // Restore theme from localStorage, default to light
@@ -191,7 +206,11 @@ function App() {
 
   return (
     <WouterRouter base={basePath}>
-      <ClerkProviderWithRoutes />
+      {presentationOrderTestMode ? (
+        <PresentationOrderTestRoutes />
+      ) : (
+        <ClerkProviderWithRoutes />
+      )}
     </WouterRouter>
   );
 }

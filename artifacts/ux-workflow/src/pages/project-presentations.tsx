@@ -1,5 +1,5 @@
 import { useParams } from "wouter";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Presentation, Plus, Loader2, Layers, FileText, CheckCircle, Target, Lightbulb, Users, TrendingUp, Layout, List, Download, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -107,7 +107,7 @@ function ExportButtons({ projectId, presentation }: { projectId: number; present
   );
 }
 
-function DeckViewer({ projectId, presentation, onClose }: { projectId: number; presentation: PresentationModel; onClose: () => void }) {
+export function DeckViewer({ projectId, presentation, onClose }: { projectId: number; presentation: PresentationModel; onClose: () => void }) {
   const slides = (presentation.slides ?? []) as unknown as Slide[];
   return (
     <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-6">
@@ -170,6 +170,75 @@ function DeckViewer({ projectId, presentation, onClose }: { projectId: number; p
         })}
       </div>
     </motion.div>
+  );
+}
+
+/**
+ * Test-only route used by the browser release check. It deliberately fetches
+ * the same list endpoint as the production page and hands the returned model
+ * to the production DeckViewer, while avoiding an external Clerk session.
+ */
+export function PresentationOrderTestPage() {
+  const { id } = useParams<{ id: string }>();
+  const projectId = parseInt(id ?? "0");
+  const [presentation, setPresentation] = useState<PresentationModel | null>(null);
+  const [viewingDeck, setViewingDeck] = useState<PresentationModel | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch(`/api/projects/${projectId}/presentations`)
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`Presentation request failed (${response.status})`);
+        return response.json() as Promise<PresentationModel[]>;
+      })
+      .then((items) => {
+        if (!cancelled) setPresentation(items[0] ?? null);
+      })
+      .catch((requestError: unknown) => {
+        if (!cancelled) {
+          setError(requestError instanceof Error ? requestError.message : "Unable to load presentation");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
+
+  if (viewingDeck) {
+    return (
+      <div className="min-h-screen bg-background p-6 md:p-8">
+        <DeckViewer
+          projectId={projectId}
+          presentation={viewingDeck}
+          onClose={() => setViewingDeck(null)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-background p-6 md:p-8">
+      <h1 className="text-4xl font-black text-foreground tracking-tighter">Presentations</h1>
+      {error && <p role="alert" className="mt-6 text-destructive">{error}</p>}
+      {!error && !presentation && (
+        <p className="mt-6 text-muted-foreground">Loading presentation…</p>
+      )}
+      {presentation && (
+        <div className="mt-8 max-w-5xl rounded-3xl border border-border bg-card p-6 shadow-sm">
+          <h2 className="text-2xl font-black text-foreground">{presentation.title}</h2>
+          <Button
+            type="button"
+            className="mt-6 h-12 rounded-xl font-bold"
+            onClick={() => setViewingDeck(presentation)}
+          >
+            <Layers className="mr-2 h-5 w-5" />
+            View Stakeholder Deck
+          </Button>
+        </div>
+      )}
+    </main>
   );
 }
 
