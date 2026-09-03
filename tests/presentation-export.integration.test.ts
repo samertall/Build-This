@@ -1,11 +1,17 @@
 import { inflateRawSync, inflateSync } from "node:zlib";
-import { describe, expect, it } from "vitest";
+import express from "express";
+import request from "supertest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { createRequireAuth } from "../artifacts/api-server/src/middlewares/auth";
+import projectsRouter from "../artifacts/api-server/src/routes/projects";
 import { createPdf, createPptx } from "../artifacts/api-server/src/lib/presentation-export";
 import {
   expectedContentText,
   expectedSlideHeadings,
   representativePresentationFixture,
 } from "./fixtures/presentation-fixtures";
+import { db, presentationsTable, projectsTable } from "../lib/db/src";
+import { eq } from "drizzle-orm";
 
 type ZipEntry = {
   name: string;
@@ -119,6 +125,18 @@ function pdfText(pdf: Buffer): string {
   return extractedText.join(" ");
 }
 
+function binaryParser(
+  response: NodeJS.ReadableStream,
+  callback: (error: Error | null, body: Buffer) => void,
+): void {
+  const chunks: Buffer[] = [];
+  response.on("data", (chunk) => {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  });
+  response.on("end", () => callback(null, Buffer.concat(chunks)));
+  response.on("error", (error) => callback(error, Buffer.alloc(0)));
+}
+
 describe("presentation exports", () => {
   it("creates an intact PPTX package containing every slide heading and representative content", async () => {
     const pptx = await createPptx(representativePresentationFixture);
@@ -153,5 +171,130 @@ describe("presentation exports", () => {
     expect(text).toEqual(expect.stringContaining(expectedSlideHeadings[1]));
     expect(text).toEqual(expect.stringContaining(expectedSlideHeadings[2]));
     expect(text).toEqual(expect.stringContaining(expectedContentText[1]));
+  });
+});
+
+const EXPORT_OWNER_ID = "presentation-export-owner";
+const EXPORT_OUTSIDER_ID = "presentation-export-outsider";
+const exportApp = express();
+exportApp.use(express.json());
+exportApp.use((req, _res, next) => {
+  req.log = { error: vi.fn() } as never;
+  next();
+});
+exportApp.use("/api", createRequireAuth({
+  getUserId: (req) => req.header("x-test-user-id") ?? null,
+  getPrimaryEmail: async () => undefined,
+}));
+exportApp.use("/api", projectsRouter);
+
+let exportProjectId: number;
+let exportPresentationId: number;
+
+function asExportUser(req: request.Test, userId: string) {
+  return req.set("x-test-user-id", userId);
+}
+
+function exportUrl(): string {
+  return `/api/projects/${exportProjectId}/presentations/${exportPresentationId}/export`;
+}
+
+describe("presentation download routes", () => {
+  beforeEach(async () => {
+    if (exportProjectId) {
+      await db.delete(projectsTable).where(eq(projectsTable.id, exportProjectId));
+    }
+
+    const [project] = await db.insert(projectsTable).values({
+      ownerId: EXPORT_OWNER_ID,
+      name: "Presentation export integration test",
+      description: "Download boundary test project",
+      status: "active",
+    }).returning({ id: projectsTable.id });
+    if (!project) throw new Error("Failed to create export test project");
+    exportProjectId = project.id;
+
+    const [presentation] = await db.insert(presentationsTable).values({
+      projectId: exportProjectId,
+      title: representativePresentationFixture.title,
+      presentationType: representativePresentationFixture.presentationType,
+      audience: representativePresentationFixture.audience,
+      slideCount: representativePresentationFixture.slides.length,
+      slides: representativePresentationFixture.slides,
+      status: "ready",
+    }).returning({ id: presentationsTable.id });
+    if (!presentation) throw new Error("Failed to create export test presentation");
+    exportPresentationId = presentation.id;
+  });
+
+  afterAll(async () => {
+    if (exportProjectId) {
+      await db.delete(projectsTable).where(eq(projectsTable.id, exportProjectId));
+    }
+  });
+
+  it("rejects unauthenticated and unauthorized download requests", async () => {
+    const unauthenticated = await request(exportApp).get(`${exportUrl()}/pptx`);
+    expect(unauthenticated.status).toBe(401);
+    expect(unauthenticated.body).toEqual({ error: "Unauthorized" });
+
+    const unauthorized = await asExportUser(
+      request(exportApp).get(`${exportUrl()}/pdf`),
+      EXPORT_OUTSIDER_ID,
+    );
+    expect(unauthorized.status).toBe(404);
+    expect(unauthorized.body).toEqual({ error: "Not found" });
+  });
+
+  it.each([
+    {
+      format: "pptx",
+      contentType: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      signature: "504b0304",
+    },
+    {
+      format: "pdf",
+      contentType: "application/pdf",
+      signature: "255044462d",
+    },
+  ])("sends a complete private .$format download with its expected file details", async ({
+    format,
+    contentType,
+    signature,
+  }) => {
+    const response = await asExportUser(
+      request(exportApp).get(`${exportUrl()}/${format}`).buffer(true).parse(binaryParser),
+      EXPORT_OWNER_ID,
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-type"]).toBe(contentType);
+    expect(response.headers["content-disposition"]).toBe(
+      `attachment; filename="customer-discovery-readout.${format}"`,
+    );
+    expect(response.headers["cache-control"]).toBe("private, no-store");
+    expect(response.body).toBeInstanceOf(Buffer);
+    expect(response.body.length).toBeGreaterThan(0);
+    expect(Number(response.headers["content-length"])).toBe(response.body.length);
+    expect(response.body.subarray(0, format === "pptx" ? 4 : 5).toString("hex")).toBe(signature);
+  });
+
+  it("returns documented errors for missing and malformed presentation data", async () => {
+    const missing = await asExportUser(
+      request(exportApp).get(`/api/projects/${exportProjectId}/presentations/999999/export/pdf`),
+      EXPORT_OWNER_ID,
+    );
+    expect(missing.status).toBe(404);
+    expect(missing.body).toEqual({ error: "Presentation not found" });
+
+    await db.update(presentationsTable)
+      .set({ slides: { malformed: true } })
+      .where(eq(presentationsTable.id, exportPresentationId));
+    const malformed = await asExportUser(
+      request(exportApp).get(`${exportUrl()}/pptx`),
+      EXPORT_OWNER_ID,
+    );
+    expect(malformed.status).toBe(422);
+    expect(malformed.body).toEqual({ error: "This presentation does not contain exportable slides" });
   });
 });

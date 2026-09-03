@@ -3,3 +3,4 @@
 - [Mounted web artifact routing](mounted-web-artifact-routing.md) — support the artifact slug mount in the client router when the preview path is rooted.
 - [Clerk email invitation matching](clerk-email-invitations.md) — resolve verified primary email through Clerk’s server API; standard session claims may not include email.
 - [Preserve pnpm workspace policy](pnpm-workspace-policy.md) — dependency commands may rewrite pnpm-workspace.yaml; preserve its security comments, ranges, and overrides.
+- [Presentation export validation](presentation-export-validation.md) — JSONB can reorder nested slide keys, so validate route bytes directly rather than regenerating from source fixtures.
