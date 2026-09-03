@@ -125,6 +125,15 @@ function pdfText(pdf: Buffer): string {
   return extractedText.join(" ");
 }
 
+function expectTextInOrder(text: string, expected: string[]): void {
+  let previousIndex = -1;
+  for (const value of expected) {
+    const index = text.indexOf(value);
+    expect(index, `expected "${value}" after the previous section`).toBeGreaterThan(previousIndex);
+    previousIndex = index;
+  }
+}
+
 function binaryParser(
   response: NodeJS.ReadableStream,
   callback: (error: Error | null, body: Buffer) => void,
@@ -277,6 +286,11 @@ describe("presentation download routes", () => {
     expect(response.body.length).toBeGreaterThan(0);
     expect(Number(response.headers["content-length"])).toBe(response.body.length);
     expect(response.body.subarray(0, format === "pptx" ? 4 : 5).toString("hex")).toBe(signature);
+
+    const exportedText = format === "pptx"
+      ? slideText(readPptxEntries(response.body).get("ppt/slides/slide1.xml")!)
+      : pdfText(response.body);
+    expectTextInOrder(exportedText, ["HEADLINE", "EVIDENCE", "RECOMMENDATION"]);
   });
 
   it("returns documented errors for missing and malformed presentation data", async () => {

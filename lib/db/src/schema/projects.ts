@@ -152,6 +152,14 @@ export const insertTaskSchema = createInsertSchema(tasksTable).omit({ id: true, 
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type Task = typeof tasksTable.$inferSelect;
 
+export type PresentationSlide = {
+  id?: number;
+  title?: string;
+  layout?: string;
+  content?: Record<string, unknown>;
+  sectionOrder?: string[];
+};
+
 export const presentationsTable = pgTable("presentations", {
   id: serial("id").primaryKey(),
   projectId: integer("project_id").notNull().references(() => projectsTable.id, { onDelete: "cascade" }),
@@ -159,7 +167,7 @@ export const presentationsTable = pgTable("presentations", {
   presentationType: text("presentation_type"),
   audience: text("audience"),
   slideCount: integer("slide_count"),
-  slides: jsonb("slides").notNull().default("[]"),
+  slides: jsonb("slides").$type<PresentationSlide[]>().notNull().default([]),
   status: text("status").notNull().default("draft"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

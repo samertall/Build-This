@@ -7,6 +7,12 @@ type ContentValue = Primitive | ContentValue[] | { [key: string]: ContentValue }
 export type ExportSlide = {
   title?: string;
   layout?: string;
+  /**
+   * JSONB does not preserve object key insertion order. New presentations
+   * store the content keys separately in this array so exports can recreate
+   * the authored section order.
+   */
+  sectionOrder?: string[];
   content?: Record<string, ContentValue>;
 };
 
@@ -41,10 +47,45 @@ function textFor(value: ContentValue): string {
   return String(value);
 }
 
-function contentLines(content: Record<string, ContentValue> | undefined): Array<{ label: string; lines: string[] }> {
+function orderedContentEntries(
+  content: Record<string, ContentValue>,
+  sectionOrder?: string[],
+): Array<[string, ContentValue]> {
+  const entries = Object.entries(content);
+  const values = new Map(entries);
+  const seen = new Set<string>();
+  const orderedKeys: string[] = [];
+
+  if (Array.isArray(sectionOrder)) {
+    for (const key of sectionOrder) {
+      if (typeof key === "string" && values.has(key) && !seen.has(key)) {
+        orderedKeys.push(key);
+        seen.add(key);
+      }
+    }
+  }
+
+  // Older records do not have sectionOrder. Sort their remaining keys so
+  // their output is still stable after PostgreSQL has normalized the JSONB.
+  for (const [key] of entries.map(([entryKey]) => [entryKey] as const).sort(([a], [b]) => (
+    a < b ? -1 : a > b ? 1 : 0
+  ))) {
+    if (!seen.has(key)) {
+      orderedKeys.push(key);
+      seen.add(key);
+    }
+  }
+
+  return orderedKeys.map((key) => [key, values.get(key)!]);
+}
+
+function contentLines(
+  content: Record<string, ContentValue> | undefined,
+  sectionOrder?: string[],
+): Array<{ label: string; lines: string[] }> {
   if (!content || typeof content !== "object") return [];
 
-  return Object.entries(content)
+  return orderedContentEntries(content, sectionOrder)
     .filter(([, value]) => value !== null && value !== undefined && textFor(value) !== "")
     .map(([key, value]) => {
       if (Array.isArray(value)) {
@@ -89,6 +130,7 @@ export function exportFileName(presentation: ExportPresentation, extension: "ppt
 
 export async function createPptx(presentation: ExportPresentation): Promise<Buffer> {
   const pptx = new PptxGenJS();
+  const slides = slidesFrom(presentation);
   pptx.layout = "LAYOUT_WIDE";
   pptx.author = "Build-This";
   pptx.company = "Build-This";
@@ -99,7 +141,7 @@ export async function createPptx(presentation: ExportPresentation): Promise<Buff
     bodyFontFace: "Aptos",
   };
 
-  for (const [index, slideData] of slidesFrom(presentation).entries()) {
+  for (const [index, slideData] of slides.entries()) {
     const slide = pptx.addSlide();
     slide.background = { color: COLORS.light };
     slide.addShape(pptx.ShapeType.rect, {
@@ -130,7 +172,7 @@ export async function createPptx(presentation: ExportPresentation): Promise<Buff
       color: COLORS.blue,
       margin: 0,
     });
-    slide.addText(`${String(index + 1).padStart(2, "0")}  /  ${slidesFrom(presentation).length}`, {
+    slide.addText(`${String(index + 1).padStart(2, "0")}  /  ${slides.length}`, {
       x: 11.3,
       y: 0.38,
       w: 1.45,
@@ -169,7 +211,7 @@ export async function createPptx(presentation: ExportPresentation): Promise<Buff
       margin: 0,
     });
 
-    const groups = contentLines(slideData.content);
+    const groups = contentLines(slideData.content, slideData.sectionOrder);
     const columns = groups.length > 4 ? 2 : 1;
     const groupWidth = columns === 2 ? 5.85 : 11.7;
     const columnGap = 0.35;
@@ -265,7 +307,7 @@ export async function createPdf(presentation: ExportPresentation): Promise<Buffe
     doc.fillColor(`#${COLORS.muted}`).font("Helvetica-Bold").fontSize(8);
     drawPdfText(doc, (slideData.layout || "content").toUpperCase(), 48, 130, { characterSpacing: 1.3, width: 300 });
 
-    const groups = contentLines(slideData.content);
+    const groups = contentLines(slideData.content, slideData.sectionOrder);
     const columns = groups.length > 4 ? 2 : 1;
     const groupWidth = columns === 2 ? 420 : 844;
     const rowHeight = groups.length > 6 ? 61 : 76;

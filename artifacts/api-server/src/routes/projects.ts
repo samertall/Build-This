@@ -877,7 +877,10 @@ function generatePresentationSlides(
   ];
 
   const slideCount = opts.slideCount ?? 9;
-  return baseSlides.slice(0, slideCount);
+  return baseSlides.slice(0, slideCount).map(slide => ({
+    ...slide,
+    sectionOrder: Object.keys(slide.content),
+  }));
 }
 
 export default router;

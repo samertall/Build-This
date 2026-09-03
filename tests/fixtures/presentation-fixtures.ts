@@ -14,6 +14,7 @@ export const representativePresentationFixture: ExportPresentation = {
     {
       title: "Executive Summary",
       layout: "overview",
+      sectionOrder: ["headline", "evidence", "recommendation"],
       content: {
         headline: "Make the next step obvious",
         evidence: [
@@ -29,11 +30,13 @@ export const representativePresentationFixture: ExportPresentation = {
     {
       title: "Empty Content Still Exports",
       layout: "closing",
+      sectionOrder: [],
       content: {},
     },
     {
       title: "Long and Nested Findings",
       layout: "details",
+      sectionOrder: ["research_summary", "nested_finding", "follow_up"],
       content: {
         research_summary: longResearchSummary,
         nested_finding: {
