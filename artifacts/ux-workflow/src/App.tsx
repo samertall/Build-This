@@ -4,6 +4,7 @@ import { publishableKeyFromHost } from "@clerk/react/internal";
 import { shadcn } from "@clerk/themes";
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import { MotionConfig } from "framer-motion";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
@@ -53,31 +54,32 @@ const clerkAppearance = {
   },
   variables: {
     colorPrimary: "#1893F7",
-    colorForeground: "hsl(215 40% 12%)",
-    colorMutedForeground: "hsl(215 15% 48%)",
-    colorDanger: "hsl(0 84% 60%)",
-    colorBackground: "hsl(0 0% 100%)",
-    colorInput: "hsl(215 15% 88%)",
-    colorInputForeground: "hsl(215 40% 12%)",
-    colorNeutral: "hsl(215 15% 88%)",
+    colorForeground: "hsl(215 50% 15%)",
+    colorMutedForeground: "hsl(215 25% 45%)",
+    colorDanger: "hsl(350 84% 60%)",
+    colorBackground: "hsl(212 100% 98%)",
+    colorInput: "hsl(212 30% 88%)",
+    colorInputForeground: "hsl(215 50% 15%)",
+    colorNeutral: "hsl(212 30% 88%)",
     fontFamily: "'Plus Jakarta Sans', sans-serif",
-    borderRadius: "0.5rem",
+    borderRadius: "0.75rem",
   },
   elements: {
     rootBox: "w-full flex justify-center",
-    cardBox: "bg-card rounded-2xl w-[440px] max-w-full overflow-hidden border border-border shadow-lg",
+    cardBox: "bg-card rounded-2xl w-[440px] max-w-full overflow-hidden border border-border shadow-[0_16px_40px_rgba(24,147,247,0.1)]",
     card: "!shadow-none !border-0 !bg-transparent !rounded-none",
     footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
-    headerTitle: "text-foreground font-semibold tracking-tight text-2xl",
-    headerSubtitle: "text-muted-foreground",
-    socialButtonsBlockButtonText: "text-foreground font-medium",
-    formFieldLabel: "text-foreground font-medium text-sm",
-    footerActionLink: "text-primary hover:text-primary/90 font-medium",
-    footerActionText: "text-muted-foreground",
-    dividerText: "text-muted-foreground text-xs",
-    identityPreviewEditButton: "text-primary hover:text-primary/90",
-    formFieldSuccessText: "text-green-600",
+    headerTitle: "text-foreground font-black tracking-tight text-3xl",
+    headerSubtitle: "text-muted-foreground font-medium",
+    socialButtonsBlockButtonText: "text-foreground font-bold",
+    formFieldLabel: "text-foreground font-bold text-sm",
+    footerActionLink: "text-primary hover:text-primary/80 font-bold",
+    footerActionText: "text-muted-foreground font-medium",
+    dividerText: "text-muted-foreground text-xs font-bold uppercase tracking-wider",
+    identityPreviewEditButton: "text-primary hover:text-primary/80",
+    formFieldSuccessText: "text-emerald-600",
     alertText: "text-foreground",
+    formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-md",
   },
 };
 
@@ -145,28 +147,30 @@ function ClerkProviderWithRoutes() {
       <QueryClientProvider client={queryClient}>
         <ClerkQueryClientCacheInvalidator />
         <TooltipProvider>
-          <Suspense fallback={<div className="min-h-screen bg-background" />}>
-            <Switch>
-              <Route path="/" component={HomeRedirect} />
-              <Route path="/sign-in/*?" component={SignInPage} />
-              <Route path="/sign-up/*?" component={SignUpPage} />
+          <MotionConfig reducedMotion="user">
+            <Suspense fallback={<div className="min-h-screen bg-background" />}>
+              <Switch>
+                <Route path="/" component={HomeRedirect} />
+                <Route path="/sign-in/*?" component={SignInPage} />
+                <Route path="/sign-up/*?" component={SignUpPage} />
 
-              <Route path="/dashboard"><ProtectedRoute component={DashboardPage} /></Route>
-              <Route path="/projects/new"><ProtectedRoute component={NewProjectPage} /></Route>
-              <Route path="/projects/:id"><ProtectedRoute component={ProjectOverviewPage} /></Route>
-              <Route path="/projects/:id/sources"><ProtectedRoute component={ProjectSourcesPage} /></Route>
-              <Route path="/projects/:id/analyze"><ProtectedRoute component={ProjectAnalyzePage} /></Route>
-              <Route path="/projects/:id/insights"><ProtectedRoute component={ProjectInsightsPage} /></Route>
-              <Route path="/projects/:id/problems"><ProtectedRoute component={ProjectProblemsPage} /></Route>
-              <Route path="/projects/:id/recommendations"><ProtectedRoute component={ProjectRecommendationsPage} /></Route>
-              <Route path="/projects/:id/journeys"><ProtectedRoute component={ProjectJourneysPage} /></Route>
-              <Route path="/projects/:id/features"><ProtectedRoute component={ProjectFeaturesPage} /></Route>
-              <Route path="/projects/:id/tasks"><ProtectedRoute component={ProjectTasksPage} /></Route>
-              <Route path="/projects/:id/presentations"><ProtectedRoute component={ProjectPresentationsPage} /></Route>
+                <Route path="/dashboard"><ProtectedRoute component={DashboardPage} /></Route>
+                <Route path="/projects/new"><ProtectedRoute component={NewProjectPage} /></Route>
+                <Route path="/projects/:id"><ProtectedRoute component={ProjectOverviewPage} /></Route>
+                <Route path="/projects/:id/sources"><ProtectedRoute component={ProjectSourcesPage} /></Route>
+                <Route path="/projects/:id/analyze"><ProtectedRoute component={ProjectAnalyzePage} /></Route>
+                <Route path="/projects/:id/insights"><ProtectedRoute component={ProjectInsightsPage} /></Route>
+                <Route path="/projects/:id/problems"><ProtectedRoute component={ProjectProblemsPage} /></Route>
+                <Route path="/projects/:id/recommendations"><ProtectedRoute component={ProjectRecommendationsPage} /></Route>
+                <Route path="/projects/:id/journeys"><ProtectedRoute component={ProjectJourneysPage} /></Route>
+                <Route path="/projects/:id/features"><ProtectedRoute component={ProjectFeaturesPage} /></Route>
+                <Route path="/projects/:id/tasks"><ProtectedRoute component={ProjectTasksPage} /></Route>
+                <Route path="/projects/:id/presentations"><ProtectedRoute component={ProjectPresentationsPage} /></Route>
 
-              <Route component={NotFound} />
-            </Switch>
-          </Suspense>
+                <Route component={NotFound} />
+              </Switch>
+            </Suspense>
+          </MotionConfig>
           <Toaster />
         </TooltipProvider>
       </QueryClientProvider>
