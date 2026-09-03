@@ -8,6 +8,7 @@ declare global {
     interface Request {
       userId?: string;
       userEmail?: string;
+      resolveUserEmail?: () => Promise<string | undefined>;
       project?: Project;
       projectRole?: "owner" | "editor" | "reviewer";
       projectMemberId?: number;
@@ -42,22 +43,31 @@ export function createRequireAuth(identityProvider: AuthIdentityProvider = clerk
       return;
     }
 
-    try {
-      // Session claims do not reliably contain a verified email and can be
-      // stale after a user changes their primary address. Use Clerk's
-      // server-side user resource as the source of truth for invitations.
-      const primaryEmail = await identityProvider.getPrimaryEmail(userId);
-      req.userId = userId;
-      req.userEmail = primaryEmail?.trim().toLowerCase();
-      next();
-    } catch (err) {
-      req.log.error({ err }, "Failed to resolve authenticated user");
-      res.status(500).json({ error: "Unable to resolve user identity" });
-    }
+    let emailPromise: Promise<string | undefined> | undefined;
+    req.userId = userId;
+    req.resolveUserEmail = () => {
+      if (!emailPromise) {
+        // Session claims do not reliably contain a verified email and can be
+        // stale after a user changes their primary address. Use Clerk's
+        // server-side user resource as the source of truth only when an
+        // email-based invitation needs to be matched.
+        emailPromise = identityProvider.getPrimaryEmail(userId).then((primaryEmail) => {
+          req.userEmail = primaryEmail?.trim().toLowerCase();
+          return req.userEmail;
+        });
+      }
+      return emailPromise;
+    };
+    next();
   };
 }
 
 export const requireAuth = createRequireAuth();
+
+async function resolveUserEmail(req: Request): Promise<string | undefined> {
+  if (req.userEmail !== undefined) return req.userEmail;
+  return req.resolveUserEmail?.();
+}
 
 export async function requireProjectAccess(
   req: Request,
@@ -98,24 +108,27 @@ export async function requireProjectAccess(
       return;
     }
 
-    const email = req.userEmail;
-    const activeCondition = email
-      ? or(eq(projectMembersTable.userId, userId), eq(projectMembersTable.email, email))
-      : eq(projectMembersTable.userId, userId);
     const [membership] = await db.select().from(projectMembersTable).where(and(
       eq(projectMembersTable.projectId, id),
       eq(projectMembersTable.status, "active"),
-      activeCondition,
+      eq(projectMembersTable.userId, userId),
     ));
 
-    const [pendingInvitation] = membership || !email
-      ? []
-      : await db.select().from(projectMembersTable).where(and(
-        eq(projectMembersTable.projectId, id),
-        eq(projectMembersTable.status, "invited"),
-        eq(projectMembersTable.email, email),
-      ));
-    const invitedMembership = membership ?? pendingInvitation;
+    let invitedMembership = membership;
+    if (!invitedMembership) {
+      const email = await resolveUserEmail(req);
+      if (email) {
+        const [emailMembership] = await db.select().from(projectMembersTable).where(and(
+          eq(projectMembersTable.projectId, id),
+          or(
+            eq(projectMembersTable.status, "active"),
+            eq(projectMembersTable.status, "invited"),
+          ),
+          eq(projectMembersTable.email, email),
+        ));
+        invitedMembership = emailMembership;
+      }
+    }
 
     if (!invitedMembership) {
       res.status(404).json({ error: "Not found" });

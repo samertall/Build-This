@@ -44,8 +44,12 @@ function validReviewItemType(value: string): boolean {
   return reviewItemTypes.has(value);
 }
 
-function actorName(req: Express.Request): string {
-  return req.userEmail ?? "Project member";
+async function actorName(req: Express.Request): Promise<string> {
+  try {
+    return (await req.resolveUserEmail?.()) ?? req.userEmail ?? "Project member";
+  } catch {
+    return "Project member";
+  }
 }
 
 function routeId(value: string | string[]): number {
@@ -86,13 +90,30 @@ router.get("/dashboard/summary", async (req, res) => {
 // Projects list
 router.get("/projects", async (req, res) => {
   try {
-    const memberCondition = req.userEmail
-      ? or(eq(projectMembersTable.userId, req.userId!), eq(projectMembersTable.email, req.userEmail))
-      : eq(projectMembersTable.userId, req.userId!);
-    const memberships = await db.select().from(projectMembersTable).where(and(
-      memberCondition,
+    const userId = req.userId!;
+    let memberships = await db.select().from(projectMembersTable).where(and(
+      eq(projectMembersTable.userId, userId),
       inArray(projectMembersTable.status, ["active", "invited"]),
     ));
+
+    // Existing access remains available from immutable Clerk user IDs even if
+    // Clerk is interrupted. When available, the authoritative email also
+    // discovers invitations sent after that access was established.
+    try {
+      const email = await req.resolveUserEmail?.();
+      if (email) {
+        const emailMemberships = await db.select().from(projectMembersTable).where(and(
+          eq(projectMembersTable.email, email),
+          inArray(projectMembersTable.status, ["active", "invited"]),
+        ));
+        const membershipsById = new Map(memberships.map(member => [member.id, member]));
+        for (const member of emailMemberships) membershipsById.set(member.id, member);
+        memberships = [...membershipsById.values()];
+      }
+    } catch {
+      // Email lookup is optional for users whose access is already bound.
+    }
+
     const pendingIds = memberships.filter(member => member.status === "invited").map(member => member.id);
     if (pendingIds.length > 0) {
       await db.update(projectMembersTable)
@@ -101,8 +122,8 @@ router.get("/projects", async (req, res) => {
     }
     const memberProjectIds = memberships.map(member => member.projectId);
     const projectScope = memberProjectIds.length > 0
-      ? or(eq(projectsTable.ownerId, req.userId!), inArray(projectsTable.id, memberProjectIds))
-      : eq(projectsTable.ownerId, req.userId!);
+      ? or(eq(projectsTable.ownerId, userId), inArray(projectsTable.id, memberProjectIds))
+      : eq(projectsTable.ownerId, userId);
     const projects = await db.select().from(projectsTable).where(projectScope).orderBy(desc(projectsTable.updatedAt));
     res.json(projects);
   } catch (err) {
@@ -284,6 +305,7 @@ router.post("/projects/:id/insights/:insightId/approve", async (req, res) => {
     const insightId = routeId(req.params.insightId);
     const parsed = ApproveInsightBody.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
+    const auditActorName = await actorName(req);
     const insight = await db.transaction(async (tx) => {
       const [updated] = await tx.update(researchInsightsTable)
         .set({ approvalStatus: parsed.data.status })
@@ -297,7 +319,7 @@ router.post("/projects/:id/insights/:insightId/approve", async (req, res) => {
         status: parsed.data.status,
         comment: parsed.data.comment?.trim() || null,
         actorId: req.userId!,
-        actorName: actorName(req),
+        actorName: auditActorName,
       });
       return updated;
     });
@@ -326,6 +348,7 @@ router.post("/projects/:id/problems/:problemId/approve", async (req, res) => {
     const problemId = routeId(req.params.problemId);
     const parsed = ApproveProblemBody.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
+    const auditActorName = await actorName(req);
     const problem = await db.transaction(async (tx) => {
       const [updated] = await tx.update(problemStatementsTable)
         .set({ approvalStatus: parsed.data.status })
@@ -339,7 +362,7 @@ router.post("/projects/:id/problems/:problemId/approve", async (req, res) => {
         status: parsed.data.status,
         comment: parsed.data.comment?.trim() || null,
         actorId: req.userId!,
-        actorName: actorName(req),
+        actorName: auditActorName,
       });
       return updated;
     });
@@ -368,6 +391,7 @@ router.post("/projects/:id/recommendations/:recId/approve", async (req, res) => 
     const recId = routeId(req.params.recId);
     const parsed = ApproveRecommendationBody.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
+    const auditActorName = await actorName(req);
     const rec = await db.transaction(async (tx) => {
       const [updated] = await tx.update(recommendationsTable)
         .set({ approvalStatus: parsed.data.status })
@@ -381,7 +405,7 @@ router.post("/projects/:id/recommendations/:recId/approve", async (req, res) => 
         status: parsed.data.status,
         comment: parsed.data.comment?.trim() || null,
         actorId: req.userId!,
-        actorName: actorName(req),
+        actorName: auditActorName,
       });
       return updated;
     });
@@ -691,13 +715,14 @@ router.post("/projects/:id/comments/:itemType/:itemId", async (req, res) => {
       res.status(400).json({ error: "Invalid comment" });
       return;
     }
+    const commentAuthorName = await actorName(req);
     const [comment] = await db.insert(projectCommentsTable).values({
       projectId: routeId(req.params.id),
       itemType,
       itemId: routeId(req.params.itemId),
       body: parsed.data.body.trim(),
       authorId: req.userId!,
-      authorName: actorName(req),
+      authorName: commentAuthorName,
     }).returning();
     res.status(201).json(comment);
   } catch (err) {

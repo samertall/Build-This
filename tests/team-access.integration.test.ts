@@ -67,6 +67,7 @@ beforeEach(async () => {
   clerkTestState.primaryEmails.set(OWNER_ID, OWNER_EMAIL);
   clerkTestState.primaryEmails.set(REVIEWER_ID, REVIEWER_EMAIL);
   clerkTestState.primaryEmails.set(INVITEE_ID, INVITEE_EMAIL);
+  getPrimaryEmail.mockImplementation(async (userId: string) => clerkTestState.primaryEmails.get(userId));
   getPrimaryEmail.mockClear();
   await createProject();
 });
@@ -100,6 +101,91 @@ describe("team access", () => {
       .where(eq(projectMembersTable.id, invitation!.id));
     expect(member?.status).toBe("active");
     expect(member?.userId).toBe(INVITEE_ID);
+  });
+
+  it("authorizes owners and bound members without a Clerk user lookup", async () => {
+    await db.insert(projectMembersTable).values({
+      projectId,
+      userId: REVIEWER_ID,
+      email: REVIEWER_EMAIL,
+      role: "reviewer",
+      status: "active",
+      invitedBy: OWNER_ID,
+    });
+    getPrimaryEmail.mockRejectedValue(new Error("Clerk user API unavailable"));
+
+    const ownerResponse = await asUser(
+      request(app).get(`/api/projects/${projectId}`),
+      OWNER_ID,
+    );
+    const memberResponse = await asUser(
+      request(app).get(`/api/projects/${projectId}`),
+      REVIEWER_ID,
+    );
+
+    expect(ownerResponse.status).toBe(200);
+    expect(memberResponse.status).toBe(200);
+    expect(memberResponse.body.accessRole).toBe("reviewer");
+    expect(getPrimaryEmail).not.toHaveBeenCalled();
+
+    const ownerListResponse = await asUser(
+      request(app).get("/api/projects"),
+      OWNER_ID,
+    );
+    const memberListResponse = await asUser(
+      request(app).get("/api/projects"),
+      REVIEWER_ID,
+    );
+
+    expect(ownerListResponse.status).toBe(200);
+    expect(ownerListResponse.body).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: projectId }),
+    ]));
+    expect(memberListResponse.status).toBe(200);
+    expect(memberListResponse.body).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: projectId }),
+    ]));
+    expect(getPrimaryEmail).toHaveBeenCalledWith(OWNER_ID);
+    expect(getPrimaryEmail).toHaveBeenCalledWith(REVIEWER_ID);
+  });
+
+  it("discovers a new invitation for a user who already owns another project", async () => {
+    const [sharedProject] = await db.insert(projectsTable).values({
+      ownerId: "team-access-second-owner",
+      name: "Newly shared project",
+      status: "active",
+    }).returning({ id: projectsTable.id });
+    if (!sharedProject) throw new Error("Failed to create shared test project");
+
+    try {
+      const [invitation] = await db.insert(projectMembersTable).values({
+        projectId: sharedProject.id,
+        email: OWNER_EMAIL,
+        role: "editor",
+        status: "invited",
+        invitedBy: "team-access-second-owner",
+      }).returning();
+      if (!invitation) throw new Error("Failed to create invitation");
+
+      const response = await asUser(
+        request(app).get("/api/projects"),
+        OWNER_ID,
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: projectId }),
+        expect.objectContaining({ id: sharedProject.id }),
+      ]));
+      expect(getPrimaryEmail).toHaveBeenCalledWith(OWNER_ID);
+
+      const [activatedInvitation] = await db.select().from(projectMembersTable)
+        .where(eq(projectMembersTable.id, invitation.id));
+      expect(activatedInvitation?.status).toBe("active");
+      expect(activatedInvitation?.userId).toBe(OWNER_ID);
+    } finally {
+      await db.delete(projectsTable).where(eq(projectsTable.id, sharedProject.id));
+    }
   });
 
   it("allows editors to update project configuration but blocks reviewers", async () => {
@@ -139,6 +225,43 @@ describe("team access", () => {
     const [project] = await db.select().from(projectsTable)
       .where(eq(projectsTable.id, projectId));
     expect(project?.description).toBe("Editor updated the configuration");
+  });
+
+  it("keeps collaboration writes available with generic attribution during a Clerk outage", async () => {
+    await db.insert(projectMembersTable).values({
+      projectId,
+      userId: REVIEWER_ID,
+      email: REVIEWER_EMAIL,
+      role: "reviewer",
+      status: "active",
+      invitedBy: OWNER_ID,
+    });
+    const [insight] = await db.insert(researchInsightsTable).values({
+      projectId,
+      insight: "Writes should survive identity-provider interruptions",
+    }).returning();
+    if (!insight) throw new Error("Failed to create test insight");
+    getPrimaryEmail.mockRejectedValue(new Error("Clerk user API unavailable"));
+
+    const commentResponse = await asUser(
+      request(app).post(`/api/projects/${projectId}/comments/insight/${insight.id}`),
+      REVIEWER_ID,
+    ).send({ body: "Still available during the outage" });
+    const approvalResponse = await asUser(
+      request(app).post(`/api/projects/${projectId}/insights/${insight.id}/approve`),
+      REVIEWER_ID,
+    ).send({ status: "approved" });
+
+    expect(commentResponse.status).toBe(201);
+    expect(commentResponse.body.authorName).toBe("Project member");
+    expect(approvalResponse.status).toBe(200);
+
+    const [event] = await db.select().from(approvalEventsTable).where(and(
+      eq(approvalEventsTable.projectId, projectId),
+      eq(approvalEventsTable.itemType, "insight"),
+      eq(approvalEventsTable.itemId, insight.id),
+    ));
+    expect(event?.actorName).toBe("Project member");
   });
 
   it("rolls back an approval when its audit event cannot be inserted", async () => {
@@ -238,7 +361,10 @@ describe("team access", () => {
     ]));
     expect(comments.status).toBe(200);
     expect(comments.body).toEqual(expect.arrayContaining([
-      expect.objectContaining({ body: "Visible to the reviewer session" }),
+      expect.objectContaining({
+        body: "Visible to the reviewer session",
+        authorName: OWNER_EMAIL,
+      }),
     ]));
     expect(history.status).toBe(200);
     expect(history.body).toEqual(expect.arrayContaining([
@@ -246,6 +372,7 @@ describe("team access", () => {
         status: "approved",
         comment: "Approved in the owner session",
         actorId: OWNER_ID,
+        actorName: OWNER_EMAIL,
       }),
     ]));
   });
