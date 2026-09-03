@@ -8,7 +8,7 @@ _Replace the heading above with the project's name, and this line with one sente
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm run test:integration` — API, export, and rendering integration checks
-- `pnpm run test:browser` — release browser check for authored and legacy presentation ordering
+- `pnpm run test:browser` — release browser checks for presentation ordering and authenticated team review
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec; this also refreshes shared library declarations before leaf package checks
 - `pnpm run typecheck:libs` — refresh shared declarations after changing database or library source without changing the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)

@@ -104,7 +104,7 @@ export function ProjectMembersDialog({ projectId, accessRole }: ProjectMembersDi
           {members.isLoading ? (
             <p className="py-6 text-center text-sm text-muted-foreground">Loading team…</p>
           ) : members.data?.map(member => (
-            <div key={member.id} className="flex items-center gap-3 rounded-2xl border border-border p-4">
+            <div key={member.id} data-testid="project-member-row" className="flex items-center gap-3 rounded-2xl border border-border p-4">
               <Avatar><AvatarFallback className="font-black">{member.email[0]?.toUpperCase()}</AvatarFallback></Avatar>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-bold">{member.name || member.email}</p>
@@ -113,7 +113,7 @@ export function ProjectMembersDialog({ projectId, accessRole }: ProjectMembersDi
               <Badge variant={member.status === "active" ? "secondary" : "outline"} className="capitalize">{member.role}</Badge>
               {canManage && (
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="w-4 h-4" /></Button></DropdownMenuTrigger>
+                  <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="Member actions"><MoreHorizontal className="w-4 h-4" /></Button></DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => updateMember.mutate({ id: projectId, memberId: member.id, data: { role: member.role === "editor" ? "reviewer" : "editor" } }, { onSuccess: () => void refresh() })}>
                       Make {member.role === "editor" ? "reviewer" : "editor"}

@@ -5,3 +5,4 @@
 - [Preserve pnpm workspace policy](pnpm-workspace-policy.md) — dependency commands may rewrite pnpm-workspace.yaml; preserve its security comments, ranges, and overrides.
 - [Presentation export validation](presentation-export-validation.md) — JSONB can reorder nested slide keys, so validate route bytes directly rather than regenerating from source fixtures.
 - [Playwright on Replit Nix](playwright-on-replit-nix.md) — install browser binaries in the validation command; Chromium also needs a separate libgbm package beyond Mesa.
+- [Authenticated browser test modes](authenticated-browser-test-modes.md) — cover API identity and Clerk-dependent UI shells; bypassing route guards alone still breaks hooks.

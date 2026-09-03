@@ -30,6 +30,8 @@ const ProjectPresentationsPage = lazy(() => import("@/pages/project-presentation
 const queryClient = new QueryClient();
 const presentationOrderTestMode =
   import.meta.env.VITE_PRESENTATION_ORDER_TEST_MODE === "true";
+const teamReviewTestMode =
+  import.meta.env.VITE_TEAM_REVIEW_TEST_MODE === "true";
 
 const clerkPubKey = publishableKeyFromHost(
   window.location.hostname,
@@ -44,7 +46,7 @@ function stripBase(path: string): string {
     : path;
 }
 
-if (!clerkPubKey && !presentationOrderTestMode) {
+if (!clerkPubKey && !presentationOrderTestMode && !teamReviewTestMode) {
   throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY in .env file");
 }
 
@@ -193,6 +195,35 @@ function PresentationOrderTestRoutes() {
   );
 }
 
+function BrowserTestRoutes() {
+  return (
+    <Switch>
+      <Route
+        path="/projects/:id/presentations"
+        component={PresentationOrderTestPage}
+      />
+      <Route path="/projects/:id" component={ProjectOverviewPage} />
+      <Route path="/projects/:id/insights" component={ProjectInsightsPage} />
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+
+function BrowserTestModeWithRoutes() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <MotionConfig reducedMotion="user">
+          <Suspense fallback={<div className="min-h-screen bg-background" />}>
+            <BrowserTestRoutes />
+          </Suspense>
+        </MotionConfig>
+        <Toaster />
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
+
 function App() {
   useEffect(() => {
     // Restore theme from localStorage, default to light
@@ -206,8 +237,8 @@ function App() {
 
   return (
     <WouterRouter base={basePath}>
-      {presentationOrderTestMode ? (
-        <PresentationOrderTestRoutes />
+      {presentationOrderTestMode || teamReviewTestMode ? (
+        <BrowserTestModeWithRoutes />
       ) : (
         <ClerkProviderWithRoutes />
       )}

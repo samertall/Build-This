@@ -22,6 +22,10 @@ export interface AuthIdentityProvider {
 }
 
 function getAuthenticatedUserId(req: Request): string | null {
+  if (process.env.TEAM_REVIEW_TEST_MODE === "true") {
+    return req.header("x-test-user-id") ?? null;
+  }
+
   const auth = getAuth(req);
   const userId = auth?.sessionClaims?.userId || auth?.userId;
   return typeof userId === "string" ? userId : null;
@@ -45,6 +49,13 @@ export function createRequireAuth(identityProvider: AuthIdentityProvider = clerk
 
     let emailPromise: Promise<string | undefined> | undefined;
     req.userId = userId;
+    if (process.env.TEAM_REVIEW_TEST_MODE === "true") {
+      const testEmail = req.header("x-test-session-email")?.trim().toLowerCase();
+      if (testEmail) {
+        req.userEmail = testEmail;
+        emailPromise = Promise.resolve(testEmail);
+      }
+    }
     req.resolveUserEmail = () => {
       if (!emailPromise) {
         // Session claims do not reliably contain a verified email and can be

@@ -37,6 +37,18 @@ interface DashboardLayoutProps {
   projectId?: number;
 }
 
+interface DashboardUser {
+  imageUrl?: string;
+  fullName?: string | null;
+  firstName?: string | null;
+  emailAddress?: string;
+}
+
+interface DashboardLayoutContentProps extends DashboardLayoutProps {
+  user: DashboardUser;
+  signOut: () => void | Promise<void>;
+}
+
 function useDarkMode() {
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
   const toggle = () => {
@@ -47,10 +59,8 @@ function useDarkMode() {
   return { dark, toggle };
 }
 
-export function DashboardLayout({ children, projectId }: DashboardLayoutProps) {
+function DashboardLayoutContent({ children, projectId, user, signOut }: DashboardLayoutContentProps) {
   const [location] = useLocation();
-  const { user } = useUser();
-  const { signOut } = useClerk();
   const { dark, toggle } = useDarkMode();
 
   const navigation = [
@@ -193,7 +203,7 @@ export function DashboardLayout({ children, projectId }: DashboardLayoutProps) {
               </Avatar>
               <div className="flex flex-col items-start text-left flex-1 min-w-0">
                 <span className="text-sm font-bold truncate text-white w-full">{user?.fullName}</span>
-                <span className="text-xs text-sidebar-foreground/60 font-mono truncate w-full group-hover:text-sidebar-foreground/80 transition-colors">{user?.primaryEmailAddress?.emailAddress}</span>
+                <span className="text-xs text-sidebar-foreground/60 font-mono truncate w-full group-hover:text-sidebar-foreground/80 transition-colors">{user.emailAddress}</span>
               </div>
             </Button>
           </DropdownMenuTrigger>
@@ -266,4 +276,40 @@ export function DashboardLayout({ children, projectId }: DashboardLayoutProps) {
       </div>
     </div>
   );
+}
+
+function ClerkDashboardLayout(props: DashboardLayoutProps) {
+  const { user } = useUser();
+  const { signOut } = useClerk();
+
+  return (
+    <DashboardLayoutContent
+      {...props}
+      user={{
+        imageUrl: user?.imageUrl,
+        fullName: user?.fullName,
+        firstName: user?.firstName,
+        emailAddress: user?.primaryEmailAddress?.emailAddress,
+      }}
+      signOut={signOut}
+    />
+  );
+}
+
+export function DashboardLayout(props: DashboardLayoutProps) {
+  if (import.meta.env.VITE_TEAM_REVIEW_TEST_MODE === "true") {
+    return (
+      <DashboardLayoutContent
+        {...props}
+        user={{
+          fullName: "Team Review Owner",
+          firstName: "Team",
+          emailAddress: "team-review-owner@example.com",
+        }}
+        signOut={() => undefined}
+      />
+    );
+  }
+
+  return <ClerkDashboardLayout {...props} />;
 }
