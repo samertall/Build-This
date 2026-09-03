@@ -15,37 +15,49 @@ declare global {
   }
 }
 
+export interface AuthIdentityProvider {
+  getUserId(req: Request): string | null;
+  getPrimaryEmail(userId: string): Promise<string | undefined>;
+}
+
 function getAuthenticatedUserId(req: Request): string | null {
   const auth = getAuth(req);
   const userId = auth?.sessionClaims?.userId || auth?.userId;
   return typeof userId === "string" ? userId : null;
 }
 
-function getAuthenticatedUserEmail(req: Request): string | null {
-  const auth = getAuth(req);
-  const claims = auth?.sessionClaims as Record<string, unknown> | undefined;
-  const email = claims?.email;
-  return typeof email === "string" ? email.trim().toLowerCase() : null;
+const clerkIdentityProvider: AuthIdentityProvider = {
+  getUserId: getAuthenticatedUserId,
+  async getPrimaryEmail(userId) {
+    const user = await clerkClient.users.getUser(userId);
+    return user.primaryEmailAddress?.emailAddress;
+  },
+};
+
+export function createRequireAuth(identityProvider: AuthIdentityProvider = clerkIdentityProvider) {
+  return async function requireAuth(req: Request, res: Response, next: NextFunction) {
+    const userId = identityProvider.getUserId(req);
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    try {
+      // Session claims do not reliably contain a verified email and can be
+      // stale after a user changes their primary address. Use Clerk's
+      // server-side user resource as the source of truth for invitations.
+      const primaryEmail = await identityProvider.getPrimaryEmail(userId);
+      req.userId = userId;
+      req.userEmail = primaryEmail?.trim().toLowerCase();
+      next();
+    } catch (err) {
+      req.log.error({ err }, "Failed to resolve authenticated user");
+      res.status(500).json({ error: "Unable to resolve user identity" });
+    }
+  };
 }
 
-export async function requireAuth(req: Request, res: Response, next: NextFunction) {
-  const userId = getAuthenticatedUserId(req);
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
-  try {
-    const claimEmail = getAuthenticatedUserEmail(req);
-    const user = claimEmail ? null : await clerkClient.users.getUser(userId);
-    req.userId = userId;
-    req.userEmail = (claimEmail ?? user?.primaryEmailAddress?.emailAddress)?.trim().toLowerCase();
-    next();
-  } catch (err) {
-    req.log.error({ err }, "Failed to resolve authenticated user");
-    res.status(500).json({ error: "Unable to resolve user identity" });
-  }
-}
+export const requireAuth = createRequireAuth();
 
 export async function requireProjectAccess(
   req: Request,

@@ -2,3 +2,4 @@
 - [Same-origin API and reproducible builds](same-origin-api-builds.md) — keep API CORS restrictive and let static Vite builds run without workflow-only environment variables.
 - [Mounted web artifact routing](mounted-web-artifact-routing.md) — support the artifact slug mount in the client router when the preview path is rooted.
 - [Clerk email invitation matching](clerk-email-invitations.md) — resolve verified primary email through Clerk’s server API; standard session claims may not include email.
+- [Preserve pnpm workspace policy](pnpm-workspace-policy.md) — dependency commands may rewrite pnpm-workspace.yaml; preserve its security comments, ranges, and overrides.
