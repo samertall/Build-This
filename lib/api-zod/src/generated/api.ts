@@ -646,6 +646,28 @@ export const GeneratePresentationResponse = zod.object({
 
 
 /**
+ * @summary Download a presentation as a PowerPoint file
+ */
+export const ExportPresentationPptxParams = zod.object({
+  "id": zod.coerce.number(),
+  "presentationId": zod.coerce.number()
+})
+
+export const ExportPresentationPptxResponse = zod.unknown()
+
+
+/**
+ * @summary Download a presentation as a PDF file
+ */
+export const ExportPresentationPdfParams = zod.object({
+  "id": zod.coerce.number(),
+  "presentationId": zod.coerce.number()
+})
+
+export const ExportPresentationPdfResponse = zod.unknown()
+
+
+/**
  * @summary Get project-level stats (counts, approval rates, time saved)
  */
 export const GetProjectStatsParams = zod.object({

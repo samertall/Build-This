@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Request, type Response } from "express";
 import { db } from "@workspace/db";
 import {
   projectsTable,
@@ -33,6 +33,7 @@ import {
 } from "@workspace/api-zod";
 import { runFullAnalysis } from "../lib/agents";
 import { requireProjectAccess, requireProjectRole } from "../middlewares/auth";
+import { createPdf, createPptx, exportFileName, isExportSlideArray } from "../lib/presentation-export";
 
 const router = Router();
 const editableRoles = requireProjectRole("owner", "editor");
@@ -511,9 +512,9 @@ router.post("/projects/:id/presentations", editableRoles, async (req, res) => {
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
     const project = req.project!;
     const insights = await db.select().from(researchInsightsTable).where(and(eq(researchInsightsTable.projectId, id), eq(researchInsightsTable.approvalStatus, "approved")));
-    const problems = await db.select().from(problemStatementsTable).where(eq(problemStatementsTable.projectId, id));
-    const recs = await db.select().from(recommendationsTable).where(eq(recommendationsTable.projectId, id));
-    const features = await db.select().from(featuresTable).where(eq(featuresTable.projectId, id));
+    const problems = await db.select().from(problemStatementsTable).where(and(eq(problemStatementsTable.projectId, id), eq(problemStatementsTable.approvalStatus, "approved")));
+    const recs = await db.select().from(recommendationsTable).where(and(eq(recommendationsTable.projectId, id), eq(recommendationsTable.approvalStatus, "approved")));
+    const features = await db.select().from(featuresTable).where(and(eq(featuresTable.projectId, id), eq(featuresTable.approvalStatus, "approved")));
     const slides = generatePresentationSlides(project, insights, problems, recs, features, parsed.data);
     const [presentation] = await db.insert(presentationsTable).values({
       projectId: id,
@@ -529,6 +530,54 @@ router.post("/projects/:id/presentations", editableRoles, async (req, res) => {
     req.log.error({ err }, "Failed to generate presentation");
     res.status(500).json({ error: "Internal server error" });
   }
+});
+
+async function exportPresentation(req: Request, res: Response, format: "pptx" | "pdf") {
+  try {
+    const projectId = routeId(req.params.id);
+    const presentationId = routeId(req.params.presentationId);
+    const [presentation] = await db.select().from(presentationsTable).where(and(
+      eq(presentationsTable.id, presentationId),
+      eq(presentationsTable.projectId, projectId),
+    ));
+
+    if (!presentation) {
+      res.status(404).json({ error: "Presentation not found" });
+      return;
+    }
+    if (!isExportSlideArray(presentation.slides)) {
+      res.status(422).json({ error: "This presentation does not contain exportable slides" });
+      return;
+    }
+
+    const exportInput = {
+      title: presentation.title,
+      presentationType: presentation.presentationType,
+      audience: presentation.audience,
+      slides: presentation.slides,
+    };
+    const file = format === "pptx" ? await createPptx(exportInput) : await createPdf(exportInput);
+    res.set({
+      "Content-Type": format === "pptx"
+        ? "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        : "application/pdf",
+      "Content-Disposition": `attachment; filename="${exportFileName(exportInput, format)}"`,
+      "Content-Length": String(file.length),
+      "Cache-Control": "private, no-store",
+    });
+    res.send(file);
+  } catch (err) {
+    req.log.error({ err, format }, "Failed to export presentation");
+    res.status(500).json({ error: `Unable to export presentation as ${format.toUpperCase()}` });
+  }
+}
+
+router.get("/projects/:id/presentations/:presentationId/export/pptx", (req, res) => {
+  void exportPresentation(req, res, "pptx");
+});
+
+router.get("/projects/:id/presentations/:presentationId/export/pdf", (req, res) => {
+  void exportPresentation(req, res, "pdf");
 });
 
 // Collaboration

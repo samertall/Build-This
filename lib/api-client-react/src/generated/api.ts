@@ -1933,6 +1933,170 @@ export const useGeneratePresentation = <TError = ErrorType<unknown>,
       return useMutation(getGeneratePresentationMutationOptions(options));
     }
 
+export const getExportPresentationPptxUrl = (id: number,
+    presentationId: number,) => {
+
+
+
+
+  return `/api/projects/${id}/presentations/${presentationId}/export/pptx`
+}
+
+/**
+ * @summary Download a presentation as a PowerPoint file
+ */
+export const exportPresentationPptx = async (id: number,
+    presentationId: number, options?: RequestInit): Promise<Blob> => {
+
+  return customFetch<Blob>(getExportPresentationPptxUrl(id,presentationId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getExportPresentationPptxQueryKey = (id: number,
+    presentationId: number,) => {
+    return [
+    `/api/projects/${id}/presentations/${presentationId}/export/pptx`
+    ] as const;
+    }
+
+
+export const getExportPresentationPptxQueryOptions = <TData = Awaited<ReturnType<typeof exportPresentationPptx>>, TError = ErrorType<unknown>>(id: number,
+    presentationId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportPresentationPptx>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportPresentationPptxQueryKey(id,presentationId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportPresentationPptx>>> = ({ signal }) => exportPresentationPptx(id,presentationId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined && presentationId !== null && presentationId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportPresentationPptx>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ExportPresentationPptxQueryResult = NonNullable<Awaited<ReturnType<typeof exportPresentationPptx>>>
+export type ExportPresentationPptxQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Download a presentation as a PowerPoint file
+ */
+
+export function useExportPresentationPptx<TData = Awaited<ReturnType<typeof exportPresentationPptx>>, TError = ErrorType<unknown>>(
+ id: number,
+    presentationId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportPresentationPptx>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getExportPresentationPptxQueryOptions(id,presentationId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getExportPresentationPdfUrl = (id: number,
+    presentationId: number,) => {
+
+
+
+
+  return `/api/projects/${id}/presentations/${presentationId}/export/pdf`
+}
+
+/**
+ * @summary Download a presentation as a PDF file
+ */
+export const exportPresentationPdf = async (id: number,
+    presentationId: number, options?: RequestInit): Promise<Blob> => {
+
+  return customFetch<Blob>(getExportPresentationPdfUrl(id,presentationId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getExportPresentationPdfQueryKey = (id: number,
+    presentationId: number,) => {
+    return [
+    `/api/projects/${id}/presentations/${presentationId}/export/pdf`
+    ] as const;
+    }
+
+
+export const getExportPresentationPdfQueryOptions = <TData = Awaited<ReturnType<typeof exportPresentationPdf>>, TError = ErrorType<unknown>>(id: number,
+    presentationId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportPresentationPdf>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportPresentationPdfQueryKey(id,presentationId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportPresentationPdf>>> = ({ signal }) => exportPresentationPdf(id,presentationId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined && presentationId !== null && presentationId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportPresentationPdf>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ExportPresentationPdfQueryResult = NonNullable<Awaited<ReturnType<typeof exportPresentationPdf>>>
+export type ExportPresentationPdfQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Download a presentation as a PDF file
+ */
+
+export function useExportPresentationPdf<TData = Awaited<ReturnType<typeof exportPresentationPdf>>, TError = ErrorType<unknown>>(
+ id: number,
+    presentationId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportPresentationPdf>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getExportPresentationPdfQueryOptions(id,presentationId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getGetProjectStatsUrl = (id: number,) => {
 
 

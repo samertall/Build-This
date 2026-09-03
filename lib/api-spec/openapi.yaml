@@ -586,6 +586,56 @@ paths:
               schema:
                 $ref: "#/components/schemas/Presentation"
 
+  /projects/{id}/presentations/{presentationId}/export/pptx:
+    get:
+      operationId: exportPresentationPptx
+      tags: [presentations]
+      summary: Download a presentation as a PowerPoint file
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: presentationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: PowerPoint presentation
+          content:
+            application/vnd.openxmlformats-officedocument.presentationml.presentation:
+              schema:
+                type: string
+                format: binary
+
+  /projects/{id}/presentations/{presentationId}/export/pdf:
+    get:
+      operationId: exportPresentationPdf
+      tags: [presentations]
+      summary: Download a presentation as a PDF file
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: presentationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: PDF presentation
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
   /projects/{id}/stats:
     get:
       operationId: getProjectStats

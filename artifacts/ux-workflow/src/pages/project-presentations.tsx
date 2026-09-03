@@ -1,7 +1,7 @@
 import { useParams } from "wouter";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Presentation, Plus, Loader2, Layers, FileText, CheckCircle, Target, Lightbulb, Users, TrendingUp, Layout, List, Printer, ChevronLeft } from "lucide-react";
+import { Presentation, Plus, Loader2, Layers, FileText, CheckCircle, Target, Lightbulb, Users, TrendingUp, Layout, List, Download, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { DashboardLayout } from "@/layouts/dashboard-layout";
-import { useListPresentations, useGeneratePresentation, getListPresentationsQueryKey } from "@workspace/api-client-react";
+import {
+  exportPresentationPdf,
+  exportPresentationPptx,
+  useListPresentations,
+  useGeneratePresentation,
+  getListPresentationsQueryKey,
+  type Presentation as PresentationModel,
+} from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ReviewThread } from "@/components/review-thread";
@@ -90,8 +97,74 @@ function renderSlideContent(content: SlideContent, layout: string, large = false
   );
 }
 
-function DeckViewer({ presentation, onClose }: { presentation: any, onClose: () => void }) {
-  const slides = presentation.slides || [];
+type ExportFormat = "pptx" | "pdf";
+type ExportState = { format: ExportFormat; status: "preparing" | "failed"; message?: string } | null;
+
+function exportFileName(title: string, format: ExportFormat): string {
+  const base = title.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "presentation";
+  return `${base}.${format}`;
+}
+
+function ExportButtons({ projectId, presentation }: { projectId: number; presentation: PresentationModel }) {
+  const { toast } = useToast();
+  const [exportState, setExportState] = useState<ExportState>(null);
+
+  const download = async (format: ExportFormat) => {
+    setExportState({ format, status: "preparing" });
+    try {
+      const blob = format === "pptx"
+        ? await exportPresentationPptx(projectId, presentation.id)
+        : await exportPresentationPdf(projectId, presentation.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = exportFileName(presentation.title, format);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setExportState(null);
+      toast({
+        title: `${format.toUpperCase()} downloaded`,
+        description: `${presentation.title} is ready to share outside Build-This.`,
+      });
+    } catch {
+      const message = `We couldn't prepare the ${format.toUpperCase()} file. Please try again.`;
+      setExportState({ format, status: "failed", message });
+      toast({ title: "Export failed", description: message, variant: "destructive" });
+    }
+  };
+
+  const busyFormat = exportState?.status === "preparing" ? exportState.format : null;
+
+  return (
+    <div className="flex flex-col items-stretch gap-2">
+      <div className="flex flex-wrap gap-2">
+        {(["pptx", "pdf"] as const).map((format) => (
+          <Button
+            key={format}
+            type="button"
+            variant={format === "pptx" ? "default" : "outline"}
+            className="h-10 rounded-xl font-black"
+            disabled={busyFormat !== null}
+            onClick={() => void download(format)}
+          >
+            {busyFormat === format
+              ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              : <Download className="w-4 h-4 mr-2" />}
+            {busyFormat === format ? `Preparing ${format.toUpperCase()}…` : `Download ${format.toUpperCase()}`}
+          </Button>
+        ))}
+      </div>
+      {exportState?.status === "failed" && (
+        <p role="alert" className="text-xs font-bold text-destructive">{exportState.message}</p>
+      )}
+    </div>
+  );
+}
+
+function DeckViewer({ projectId, presentation, onClose }: { projectId: number; presentation: PresentationModel; onClose: () => void }) {
+  const slides = (presentation.slides ?? []) as unknown as Slide[];
   return (
     <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-6">
        <style>{`
@@ -126,9 +199,7 @@ function DeckViewer({ presentation, onClose }: { presentation: any, onClose: () 
            <div className="h-6 w-px bg-border hidden sm:block" />
            <h2 className="text-xl font-black text-foreground tracking-tight">{presentation.title}</h2>
          </div>
-         <Button onClick={() => window.print()} className="bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-md h-10 px-6 rounded-xl">
-           <Printer className="w-4 h-4 mr-2"/> Print / PDF
-         </Button>
+         <ExportButtons projectId={projectId} presentation={presentation} />
       </div>
 
       <div id="deck-print-area" className="flex flex-col gap-12 bg-muted/10 p-4 sm:p-8 lg:p-12 rounded-[2.5rem] border border-border/50">
@@ -175,7 +246,7 @@ export default function ProjectPresentationsPage() {
     slideCount: "9",
   });
 
-  const [viewingDeck, setViewingDeck] = useState<any | null>(null);
+  const [viewingDeck, setViewingDeck] = useState<PresentationModel | null>(null);
 
   const up = (f: string, v: string) => setForm(p => ({ ...p, [f]: v }));
 
@@ -206,7 +277,7 @@ export default function ProjectPresentationsPage() {
     return (
       <DashboardLayout projectId={projectId}>
         <div className="p-6 md:p-8 max-w-[1400px] mx-auto w-full">
-          <DeckViewer presentation={viewingDeck} onClose={() => setViewingDeck(null)} />
+          <DeckViewer projectId={projectId} presentation={viewingDeck} onClose={() => setViewingDeck(null)} />
         </div>
       </DashboardLayout>
     );
