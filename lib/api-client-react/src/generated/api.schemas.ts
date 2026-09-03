@@ -29,6 +29,7 @@ export interface Project {
   analysisStatus?: string | null;
   createdAt: string;
   updatedAt: string;
+  accessRole?: string;
 }
 
 export interface DashboardSummary {
@@ -292,6 +293,62 @@ export interface PresentationInput {
 export interface ApprovalInput {
   status: string;
   comment?: string;
+}
+
+export interface ProjectMember {
+  id: number;
+  projectId: number;
+  /** @nullable */
+  userId?: string | null;
+  email: string;
+  /** @nullable */
+  name?: string | null;
+  role: string;
+  status: string;
+  invitedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjectMemberInput {
+  email: string;
+  name?: string;
+  role?: string;
+}
+
+export interface ProjectMemberUpdate {
+  role?: string;
+  status?: string;
+}
+
+export interface ProjectComment {
+  id: number;
+  projectId: number;
+  itemType: string;
+  itemId: number;
+  body: string;
+  authorId: string;
+  /** @nullable */
+  authorName?: string | null;
+  createdAt: string;
+}
+
+export interface ProjectCommentInput {
+  body: string;
+}
+
+export interface ApprovalEvent {
+  id: number;
+  projectId: number;
+  itemType: string;
+  itemId: number;
+  status: string;
+  /** @nullable */
+  comment?: string | null;
+  actorId: string;
+  /** @nullable */
+  actorName?: string | null;
+  createdAt: string;
 }
 
 export interface ProjectStats {

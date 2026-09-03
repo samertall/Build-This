@@ -1,15 +1,17 @@
 import { useParams } from "wouter";
 import { motion } from "framer-motion";
-import { CheckCircle, XCircle, Target, HelpCircle, TrendingDown, Users } from "lucide-react";
+import { Target, HelpCircle, TrendingDown, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardLayout } from "@/layouts/dashboard-layout";
 import { PageHeader, EmptyState, listContainer, listItem } from "@/components/page-header";
-import { useListProblems, useApproveProblem, getListProblemsQueryKey } from "@workspace/api-client-react";
+import { useListProblems, useApproveProblem, getListProblemsQueryKey, getListApprovalHistoryQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { ApprovalActions } from "@/components/approval-actions";
+import { ReviewThread } from "@/components/review-thread";
 
 function ApprovalBadge({ status }: { status?: string | null }) {
   if (status === "approved") return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px] font-mono shadow-none uppercase tracking-widest font-bold">Approved</Badge>;
@@ -26,12 +28,13 @@ export default function ProjectProblemsPage() {
   const { data: problems, isLoading } = useListProblems(projectId);
   const approve = useApproveProblem();
 
-  const handleApprove = (problemId: number, status: "approved" | "rejected") => {
+  const handleApprove = (problemId: number, status: "approved" | "rejected", comment?: string) => {
     approve.mutate(
-      { id: projectId, problemId, data: { status } },
+      { id: projectId, problemId, data: { status, comment } },
       {
         onSuccess: () => {
           void qc.invalidateQueries({ queryKey: getListProblemsQueryKey(projectId) });
+          void qc.invalidateQueries({ queryKey: getListApprovalHistoryQueryKey(projectId, "problem", problemId) });
           toast({ title: status === "approved" ? "Problem approved" : "Problem rejected" });
         },
       }
@@ -162,19 +165,17 @@ export default function ProjectProblemsPage() {
                         </div>
 
                         {problem.approvalStatus === "pending" && (
-                          <div className="flex md:flex-col gap-3 flex-shrink-0 self-start opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all duration-200">
-                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                              <Button size="icon" variant="outline" className="h-12 w-12 text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800/50 hover:bg-emerald-100 rounded-full shadow-sm" onClick={() => handleApprove(problem.id, "approved")} disabled={approve.isPending} title="Approve">
-                                <CheckCircle className="w-6 h-6" />
-                              </Button>
-                            </motion.div>
-                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                              <Button size="icon" variant="outline" className="h-12 w-12 text-destructive border-destructive/20 bg-destructive/5 hover:bg-destructive/10 rounded-full shadow-sm" onClick={() => handleApprove(problem.id, "rejected")} disabled={approve.isPending} title="Reject">
-                                <XCircle className="w-6 h-6" />
-                              </Button>
-                            </motion.div>
+                          <div className="flex-shrink-0 self-start">
+                            <ApprovalActions
+                              size="large"
+                              pending={approve.isPending}
+                              onDecision={(status, comment) => handleApprove(problem.id, status, comment)}
+                            />
                           </div>
                         )}
+                      </div>
+                      <div className="mt-5 pt-4 border-t border-border/50">
+                        <ReviewThread projectId={projectId} itemType="problem" itemId={problem.id} />
                       </div>
                     </CardContent>
                   </Card>

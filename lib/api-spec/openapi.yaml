@@ -35,6 +35,8 @@ tags:
     description: Approval workflow
   - name: dashboard
     description: Dashboard summaries
+  - name: collaboration
+    description: Project members, comments, and decision history
 
 paths:
   /healthz:
@@ -603,6 +605,192 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProjectStats"
 
+  /projects/{id}/members:
+    get:
+      operationId: listProjectMembers
+      tags: [collaboration]
+      summary: List project members and pending invitations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Project members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProjectMember"
+    post:
+      operationId: inviteProjectMember
+      tags: [collaboration]
+      summary: Invite a teammate or reviewer to a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectMemberInput"
+      responses:
+        "201":
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectMember"
+  /projects/{id}/members/{memberId}:
+    patch:
+      operationId: updateProjectMember
+      tags: [collaboration]
+      summary: Change a project member role or status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectMemberUpdate"
+      responses:
+        "200":
+          description: Updated member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectMember"
+    delete:
+      operationId: removeProjectMember
+      tags: [collaboration]
+      summary: Remove a project member
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Member removed
+
+  /projects/{id}/comments/{itemType}/{itemId}:
+    get:
+      operationId: listProjectComments
+      tags: [collaboration]
+      summary: List comments on a project decision or presentation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: itemType
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProjectComment"
+    post:
+      operationId: createProjectComment
+      tags: [collaboration]
+      summary: Add a comment to a project decision or presentation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: itemType
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectCommentInput"
+      responses:
+        "201":
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectComment"
+
+  /projects/{id}/approval-history/{itemType}/{itemId}:
+    get:
+      operationId: listApprovalHistory
+      tags: [collaboration, approvals]
+      summary: List immutable approval history for a project decision
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: itemType
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Approval history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApprovalEvent"
+
 components:
   schemas:
     HealthStatus:
@@ -669,6 +857,8 @@ components:
         createdAt:
           type: string
         updatedAt:
+          type: string
+        accessRole:
           type: string
       required:
         - id
@@ -1124,6 +1314,101 @@ components:
         comment:
           type: string
       required: [status]
+
+    ProjectMember:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        userId:
+          type: ["string", "null"]
+        email:
+          type: string
+        name:
+          type: ["string", "null"]
+        role:
+          type: string
+        status:
+          type: string
+        invitedBy:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, projectId, email, role, status, invitedBy, createdAt, updatedAt]
+
+    ProjectMemberInput:
+      type: object
+      properties:
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+      required: [email]
+
+    ProjectMemberUpdate:
+      type: object
+      properties:
+        role:
+          type: string
+        status:
+          type: string
+
+    ProjectComment:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        itemType:
+          type: string
+        itemId:
+          type: integer
+        body:
+          type: string
+        authorId:
+          type: string
+        authorName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, projectId, itemType, itemId, body, authorId, createdAt]
+
+    ProjectCommentInput:
+      type: object
+      properties:
+        body:
+          type: string
+      required: [body]
+
+    ApprovalEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        itemType:
+          type: string
+        itemId:
+          type: integer
+        status:
+          type: string
+        comment:
+          type: ["string", "null"]
+        actorId:
+          type: string
+        actorName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, projectId, itemType, itemId, status, actorId, createdAt]
 
     ProjectStats:
       type: object

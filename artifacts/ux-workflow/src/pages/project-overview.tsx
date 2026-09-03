@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardLayout } from "@/layouts/dashboard-layout";
 import { useGetProject, useGetProjectStats, useListInsights, useListProblems, useListRecommendations } from "@workspace/api-client-react";
+import { ProjectMembersDialog } from "@/components/project-members-dialog";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
@@ -166,7 +167,8 @@ export default function ProjectOverviewPage() {
                 {project.stage && <Badge variant="secondary" className="font-mono font-black uppercase tracking-widest text-[10px] px-3 py-1.5 shadow-sm">{project.stage}</Badge>}
               </div>
             </div>
-            <div className="flex shrink-0">
+            <div className="flex shrink-0 items-center gap-3">
+              <ProjectMembersDialog projectId={projectId} accessRole={project.accessRole} />
               <StatusBadge status={project.analysisStatus} />
             </div>
           </div>

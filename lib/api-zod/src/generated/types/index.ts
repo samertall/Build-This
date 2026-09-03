@@ -8,6 +8,7 @@
 
 export * from './analysisRequest';
 export * from './analysisResult';
+export * from './approvalEvent';
 export * from './approvalInput';
 export * from './dashboardSummary';
 export * from './feature';
@@ -19,7 +20,12 @@ export * from './presentationInput';
 export * from './presentationSlides';
 export * from './problemStatement';
 export * from './project';
+export * from './projectComment';
+export * from './projectCommentInput';
 export * from './projectInput';
+export * from './projectMember';
+export * from './projectMemberInput';
+export * from './projectMemberUpdate';
 export * from './projectSource';
 export * from './projectSourceInput';
 export * from './projectStats';

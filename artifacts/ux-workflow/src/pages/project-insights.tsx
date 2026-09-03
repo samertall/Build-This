@@ -1,15 +1,17 @@
 import { useParams } from "wouter";
 import { motion } from "framer-motion";
-import { CheckCircle, XCircle, FlaskConical, Brain } from "lucide-react";
+import { FlaskConical, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardLayout } from "@/layouts/dashboard-layout";
 import { PageHeader, EmptyState, listContainer, listItem } from "@/components/page-header";
-import { useListInsights, useApproveInsight, getListInsightsQueryKey } from "@workspace/api-client-react";
+import { useListInsights, useApproveInsight, getListInsightsQueryKey, getListApprovalHistoryQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { ApprovalActions } from "@/components/approval-actions";
+import { ReviewThread } from "@/components/review-thread";
 
 function ConfidenceBadge({ level }: { level?: string | null }) {
   const map: Record<string, string> = {
@@ -36,12 +38,13 @@ export default function ProjectInsightsPage() {
   const { data: insights, isLoading } = useListInsights(projectId);
   const approve = useApproveInsight();
 
-  const handleApprove = (insightId: number, status: "approved" | "rejected") => {
+  const handleApprove = (insightId: number, status: "approved" | "rejected", comment?: string) => {
     approve.mutate(
-      { id: projectId, insightId, data: { status } },
+      { id: projectId, insightId, data: { status, comment } },
       {
         onSuccess: () => {
           void qc.invalidateQueries({ queryKey: getListInsightsQueryKey(projectId) });
+          void qc.invalidateQueries({ queryKey: getListApprovalHistoryQueryKey(projectId, "insight", insightId) });
           toast({ title: status === "approved" ? "Insight approved" : "Insight rejected" });
         },
       }
@@ -146,18 +149,10 @@ export default function ProjectInsightsPage() {
                               </div>
 
                               {insight.approvalStatus === "pending" && (
-                                <motion.div
-                                  initial={{ opacity: 0, y: -6 }}
-                                  whileHover={{ opacity: 1, y: 0 }}
-                                  className="flex gap-1.5 flex-shrink-0 bg-background/80 backdrop-blur border border-border/60 rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 group-hover:translate-y-0 -translate-y-1 transition-all duration-200 focus-within:opacity-100 focus-within:translate-y-0"
-                                >
-                                  <Button size="icon" variant="ghost" className="h-7 w-7 text-emerald-600 hover:bg-emerald-500/15 rounded-full" onClick={() => handleApprove(insight.id, "approved")} disabled={approve.isPending} title="Approve">
-                                    <CheckCircle className="w-4 h-4" />
-                                  </Button>
-                                  <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:bg-destructive/15 rounded-full" onClick={() => handleApprove(insight.id, "rejected")} disabled={approve.isPending} title="Reject">
-                                    <XCircle className="w-4 h-4" />
-                                  </Button>
-                                </motion.div>
+                                <ApprovalActions
+                                  pending={approve.isPending}
+                                  onDecision={(status, comment) => handleApprove(insight.id, status, comment)}
+                                />
                               )}
                             </div>
 
@@ -169,6 +164,9 @@ export default function ProjectInsightsPage() {
                                 <p className="text-muted-foreground text-sm italic leading-relaxed">"{insight.evidence}"</p>
                               </div>
                             )}
+                            <div className="mt-4 pt-3 border-t border-border/50">
+                              <ReviewThread projectId={projectId} itemType="insight" itemId={insight.id} />
+                            </div>
                           </CardContent>
                         </Card>
                       </motion.div>

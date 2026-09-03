@@ -26,4 +26,5 @@ export interface Project {
   analysisStatus?: string | null;
   createdAt: string;
   updatedAt: string;
+  accessRole?: string;
 }

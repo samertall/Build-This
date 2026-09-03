@@ -10,8 +10,11 @@ import {
   featuresTable,
   tasksTable,
   presentationsTable,
+  projectMembersTable,
+  projectCommentsTable,
+  approvalEventsTable,
 } from "@workspace/db";
-import { eq, count, and, inArray } from "drizzle-orm";
+import { eq, count, and, inArray, or, desc } from "drizzle-orm";
 import {
   CreateProjectBody,
   UpdateProjectBody,
@@ -24,11 +27,29 @@ import {
   UpdateFeatureBody,
   UpdateTaskBody,
   GeneratePresentationBody,
+  InviteProjectMemberBody,
+  UpdateProjectMemberBody,
+  CreateProjectCommentBody,
 } from "@workspace/api-zod";
 import { runFullAnalysis } from "../lib/agents";
-import { requireOwnedProject } from "../middlewares/auth";
+import { requireProjectAccess, requireProjectRole } from "../middlewares/auth";
 
 const router = Router();
+const editableRoles = requireProjectRole("owner", "editor");
+const ownerOnly = requireProjectRole("owner");
+const reviewItemTypes = new Set(["insight", "problem", "recommendation", "presentation"]);
+
+function validReviewItemType(value: string): boolean {
+  return reviewItemTypes.has(value);
+}
+
+function actorName(req: Express.Request): string {
+  return req.userEmail ?? "Project member";
+}
+
+function routeId(value: string | string[]): number {
+  return Number.parseInt(Array.isArray(value) ? value[0] : value, 10);
+}
 
 // Dashboard summary
 router.get("/dashboard/summary", async (req, res) => {
@@ -64,7 +85,24 @@ router.get("/dashboard/summary", async (req, res) => {
 // Projects list
 router.get("/projects", async (req, res) => {
   try {
-    const projects = await db.select().from(projectsTable).where(eq(projectsTable.ownerId, req.userId!)).orderBy(projectsTable.updatedAt);
+    const memberCondition = req.userEmail
+      ? or(eq(projectMembersTable.userId, req.userId!), eq(projectMembersTable.email, req.userEmail))
+      : eq(projectMembersTable.userId, req.userId!);
+    const memberships = await db.select().from(projectMembersTable).where(and(
+      memberCondition,
+      inArray(projectMembersTable.status, ["active", "invited"]),
+    ));
+    const pendingIds = memberships.filter(member => member.status === "invited").map(member => member.id);
+    if (pendingIds.length > 0) {
+      await db.update(projectMembersTable)
+        .set({ userId: req.userId!, status: "active", updatedAt: new Date() })
+        .where(inArray(projectMembersTable.id, pendingIds));
+    }
+    const memberProjectIds = memberships.map(member => member.projectId);
+    const projectScope = memberProjectIds.length > 0
+      ? or(eq(projectsTable.ownerId, req.userId!), inArray(projectsTable.id, memberProjectIds))
+      : eq(projectsTable.ownerId, req.userId!);
+    const projects = await db.select().from(projectsTable).where(projectScope).orderBy(desc(projectsTable.updatedAt));
     res.json(projects);
   } catch (err) {
     req.log.error({ err }, "Failed to list projects");
@@ -90,12 +128,12 @@ router.post("/projects", async (req, res) => {
   }
 });
 
-router.use("/projects/:id", requireOwnedProject);
+router.use("/projects/:id", requireProjectAccess);
 
 // Get project
 router.get("/projects/:id", async (req, res) => {
   try {
-    res.json(req.project);
+    res.json({ ...req.project, accessRole: req.projectRole });
   } catch (err) {
     req.log.error({ err }, "Failed to get project");
     res.status(500).json({ error: "Internal server error" });
@@ -103,14 +141,14 @@ router.get("/projects/:id", async (req, res) => {
 });
 
 // Update project
-router.patch("/projects/:id", async (req, res) => {
+router.patch("/projects/:id", editableRoles, async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = routeId(req.params.id);
     const parsed = UpdateProjectBody.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
     const [project] = await db.update(projectsTable)
       .set({ ...parsed.data, updatedAt: new Date() })
-      .where(and(eq(projectsTable.id, id), eq(projectsTable.ownerId, req.userId!)))
+      .where(eq(projectsTable.id, id))
       .returning();
     if (!project) { res.status(404).json({ error: "Not found" }); return; }
     res.json(project);
@@ -121,9 +159,9 @@ router.patch("/projects/:id", async (req, res) => {
 });
 
 // Delete project
-router.delete("/projects/:id", async (req, res) => {
+router.delete("/projects/:id", ownerOnly, async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = routeId(req.params.id);
     await db.delete(projectsTable).where(and(eq(projectsTable.id, id), eq(projectsTable.ownerId, req.userId!)));
     res.status(204).send();
   } catch (err) {
@@ -135,7 +173,7 @@ router.delete("/projects/:id", async (req, res) => {
 // Project stats
 router.get("/projects/:id/stats", async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = routeId(req.params.id);
     const [iCount] = await db.select({ count: count() }).from(researchInsightsTable).where(eq(researchInsightsTable.projectId, id));
     const [iApproved] = await db.select({ count: count() }).from(researchInsightsTable).where(and(eq(researchInsightsTable.projectId, id), eq(researchInsightsTable.approvalStatus, "approved")));
     const [pCount] = await db.select({ count: count() }).from(problemStatementsTable).where(eq(problemStatementsTable.projectId, id));
@@ -168,7 +206,7 @@ router.get("/projects/:id/stats", async (req, res) => {
 // Sources
 router.get("/projects/:id/sources", async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = routeId(req.params.id);
     const sources = await db.select().from(projectSourcesTable).where(eq(projectSourcesTable.projectId, id)).orderBy(projectSourcesTable.createdAt);
     res.json(sources);
   } catch (err) {
@@ -177,9 +215,9 @@ router.get("/projects/:id/sources", async (req, res) => {
   }
 });
 
-router.post("/projects/:id/sources", async (req, res) => {
+router.post("/projects/:id/sources", editableRoles, async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = routeId(req.params.id);
     const parsed = AddProjectSourceBody.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
     const [source] = await db.insert(projectSourcesTable).values({
@@ -194,10 +232,10 @@ router.post("/projects/:id/sources", async (req, res) => {
   }
 });
 
-router.delete("/projects/:id/sources/:sourceId", async (req, res) => {
+router.delete("/projects/:id/sources/:sourceId", editableRoles, async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const sourceId = parseInt(req.params.sourceId);
+    const id = routeId(req.params.id);
+    const sourceId = routeId(req.params.sourceId);
     const deleted = await db.delete(projectSourcesTable)
       .where(and(eq(projectSourcesTable.id, sourceId), eq(projectSourcesTable.projectId, id)))
       .returning({ id: projectSourcesTable.id });
@@ -210,20 +248,20 @@ router.delete("/projects/:id/sources/:sourceId", async (req, res) => {
 });
 
 // AI Analysis
-router.post("/projects/:id/analyze", async (req, res) => {
+router.post("/projects/:id/analyze", editableRoles, async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = routeId(req.params.id);
     const parsed = RunAnalysisBody.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
     const project = req.project!;
     const sources = await db.select().from(projectSourcesTable).where(eq(projectSourcesTable.projectId, id));
-    await db.update(projectsTable).set({ analysisStatus: "running", updatedAt: new Date() }).where(and(eq(projectsTable.id, id), eq(projectsTable.ownerId, req.userId!)));
+    await db.update(projectsTable).set({ analysisStatus: "running", updatedAt: new Date() }).where(eq(projectsTable.id, id));
     const result = await runFullAnalysis(project, sources, parsed.data.agentTypes);
-    await db.update(projectsTable).set({ analysisStatus: "complete", updatedAt: new Date() }).where(and(eq(projectsTable.id, id), eq(projectsTable.ownerId, req.userId!)));
+    await db.update(projectsTable).set({ analysisStatus: "complete", updatedAt: new Date() }).where(eq(projectsTable.id, id));
     res.json(result);
   } catch (err) {
     req.log.error({ err }, "Failed to run analysis");
-    await db.update(projectsTable).set({ analysisStatus: "error", updatedAt: new Date() }).where(and(eq(projectsTable.id, parseInt(req.params.id)), eq(projectsTable.ownerId, req.userId!)));
+    await db.update(projectsTable).set({ analysisStatus: "error", updatedAt: new Date() }).where(eq(projectsTable.id, routeId(req.params.id)));
     res.status(500).json({ error: "Analysis failed" });
   }
 });
@@ -231,7 +269,7 @@ router.post("/projects/:id/analyze", async (req, res) => {
 // Insights
 router.get("/projects/:id/insights", async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = routeId(req.params.id);
     const insights = await db.select().from(researchInsightsTable).where(eq(researchInsightsTable.projectId, id)).orderBy(researchInsightsTable.createdAt);
     res.json(insights);
   } catch (err) {
@@ -242,13 +280,26 @@ router.get("/projects/:id/insights", async (req, res) => {
 
 router.post("/projects/:id/insights/:insightId/approve", async (req, res) => {
   try {
-    const insightId = parseInt(req.params.insightId);
+    const insightId = routeId(req.params.insightId);
     const parsed = ApproveInsightBody.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
-    const [insight] = await db.update(researchInsightsTable)
-      .set({ approvalStatus: parsed.data.status })
-      .where(and(eq(researchInsightsTable.id, insightId), eq(researchInsightsTable.projectId, parseInt(req.params.id))))
-      .returning();
+    const insight = await db.transaction(async (tx) => {
+      const [updated] = await tx.update(researchInsightsTable)
+        .set({ approvalStatus: parsed.data.status })
+        .where(and(eq(researchInsightsTable.id, insightId), eq(researchInsightsTable.projectId, routeId(req.params.id))))
+        .returning();
+      if (!updated) return null;
+      await tx.insert(approvalEventsTable).values({
+        projectId: routeId(req.params.id),
+        itemType: "insight",
+        itemId: insightId,
+        status: parsed.data.status,
+        comment: parsed.data.comment?.trim() || null,
+        actorId: req.userId!,
+        actorName: actorName(req),
+      });
+      return updated;
+    });
     if (!insight) { res.status(404).json({ error: "Not found" }); return; }
     res.json(insight);
   } catch (err) {
@@ -260,7 +311,7 @@ router.post("/projects/:id/insights/:insightId/approve", async (req, res) => {
 // Problems
 router.get("/projects/:id/problems", async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = routeId(req.params.id);
     const problems = await db.select().from(problemStatementsTable).where(eq(problemStatementsTable.projectId, id)).orderBy(problemStatementsTable.createdAt);
     res.json(problems);
   } catch (err) {
@@ -271,13 +322,26 @@ router.get("/projects/:id/problems", async (req, res) => {
 
 router.post("/projects/:id/problems/:problemId/approve", async (req, res) => {
   try {
-    const problemId = parseInt(req.params.problemId);
+    const problemId = routeId(req.params.problemId);
     const parsed = ApproveProblemBody.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
-    const [problem] = await db.update(problemStatementsTable)
-      .set({ approvalStatus: parsed.data.status })
-      .where(and(eq(problemStatementsTable.id, problemId), eq(problemStatementsTable.projectId, parseInt(req.params.id))))
-      .returning();
+    const problem = await db.transaction(async (tx) => {
+      const [updated] = await tx.update(problemStatementsTable)
+        .set({ approvalStatus: parsed.data.status })
+        .where(and(eq(problemStatementsTable.id, problemId), eq(problemStatementsTable.projectId, routeId(req.params.id))))
+        .returning();
+      if (!updated) return null;
+      await tx.insert(approvalEventsTable).values({
+        projectId: routeId(req.params.id),
+        itemType: "problem",
+        itemId: problemId,
+        status: parsed.data.status,
+        comment: parsed.data.comment?.trim() || null,
+        actorId: req.userId!,
+        actorName: actorName(req),
+      });
+      return updated;
+    });
     if (!problem) { res.status(404).json({ error: "Not found" }); return; }
     res.json(problem);
   } catch (err) {
@@ -289,7 +353,7 @@ router.post("/projects/:id/problems/:problemId/approve", async (req, res) => {
 // Recommendations
 router.get("/projects/:id/recommendations", async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = routeId(req.params.id);
     const recs = await db.select().from(recommendationsTable).where(eq(recommendationsTable.projectId, id)).orderBy(recommendationsTable.createdAt);
     res.json(recs);
   } catch (err) {
@@ -300,13 +364,26 @@ router.get("/projects/:id/recommendations", async (req, res) => {
 
 router.post("/projects/:id/recommendations/:recId/approve", async (req, res) => {
   try {
-    const recId = parseInt(req.params.recId);
+    const recId = routeId(req.params.recId);
     const parsed = ApproveRecommendationBody.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
-    const [rec] = await db.update(recommendationsTable)
-      .set({ approvalStatus: parsed.data.status })
-      .where(and(eq(recommendationsTable.id, recId), eq(recommendationsTable.projectId, parseInt(req.params.id))))
-      .returning();
+    const rec = await db.transaction(async (tx) => {
+      const [updated] = await tx.update(recommendationsTable)
+        .set({ approvalStatus: parsed.data.status })
+        .where(and(eq(recommendationsTable.id, recId), eq(recommendationsTable.projectId, routeId(req.params.id))))
+        .returning();
+      if (!updated) return null;
+      await tx.insert(approvalEventsTable).values({
+        projectId: routeId(req.params.id),
+        itemType: "recommendation",
+        itemId: recId,
+        status: parsed.data.status,
+        comment: parsed.data.comment?.trim() || null,
+        actorId: req.userId!,
+        actorName: actorName(req),
+      });
+      return updated;
+    });
     if (!rec) { res.status(404).json({ error: "Not found" }); return; }
     res.json(rec);
   } catch (err) {
@@ -318,7 +395,7 @@ router.post("/projects/:id/recommendations/:recId/approve", async (req, res) => 
 // Journeys
 router.get("/projects/:id/journeys", async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = routeId(req.params.id);
     const journeys = await db.select().from(userJourneysTable).where(eq(userJourneysTable.projectId, id)).orderBy(userJourneysTable.createdAt);
     res.json(journeys);
   } catch (err) {
@@ -330,7 +407,7 @@ router.get("/projects/:id/journeys", async (req, res) => {
 // Features
 router.get("/projects/:id/features", async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = routeId(req.params.id);
     const features = await db.select().from(featuresTable).where(eq(featuresTable.projectId, id)).orderBy(featuresTable.riceScore);
     res.json(features);
   } catch (err) {
@@ -339,9 +416,9 @@ router.get("/projects/:id/features", async (req, res) => {
   }
 });
 
-router.post("/projects/:id/features", async (req, res) => {
+router.post("/projects/:id/features", editableRoles, async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = routeId(req.params.id);
     const parsed = CreateFeatureBody.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
     const data = parsed.data;
@@ -362,9 +439,9 @@ router.post("/projects/:id/features", async (req, res) => {
   }
 });
 
-router.patch("/projects/:id/features/:featureId", async (req, res) => {
+router.patch("/projects/:id/features/:featureId", editableRoles, async (req, res) => {
   try {
-    const featureId = parseInt(req.params.featureId);
+    const featureId = routeId(req.params.featureId);
     const parsed = UpdateFeatureBody.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
     const data = parsed.data;
@@ -376,7 +453,7 @@ router.patch("/projects/:id/features/:featureId", async (req, res) => {
     if (riceScore !== undefined) updateData.riceScore = riceScore;
     const [feature] = await db.update(featuresTable)
       .set(updateData)
-      .where(and(eq(featuresTable.id, featureId), eq(featuresTable.projectId, parseInt(req.params.id))))
+      .where(and(eq(featuresTable.id, featureId), eq(featuresTable.projectId, routeId(req.params.id))))
       .returning();
     if (!feature) { res.status(404).json({ error: "Not found" }); return; }
     res.json(feature);
@@ -389,7 +466,7 @@ router.patch("/projects/:id/features/:featureId", async (req, res) => {
 // Tasks
 router.get("/projects/:id/tasks", async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = routeId(req.params.id);
     const tasks = await db.select().from(tasksTable).where(eq(tasksTable.projectId, id)).orderBy(tasksTable.createdAt);
     res.json(tasks);
   } catch (err) {
@@ -398,14 +475,14 @@ router.get("/projects/:id/tasks", async (req, res) => {
   }
 });
 
-router.patch("/projects/:id/tasks/:taskId", async (req, res) => {
+router.patch("/projects/:id/tasks/:taskId", editableRoles, async (req, res) => {
   try {
-    const taskId = parseInt(req.params.taskId);
+    const taskId = routeId(req.params.taskId);
     const parsed = UpdateTaskBody.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
     const [task] = await db.update(tasksTable)
       .set(parsed.data)
-      .where(and(eq(tasksTable.id, taskId), eq(tasksTable.projectId, parseInt(req.params.id))))
+      .where(and(eq(tasksTable.id, taskId), eq(tasksTable.projectId, routeId(req.params.id))))
       .returning();
     if (!task) { res.status(404).json({ error: "Not found" }); return; }
     res.json(task);
@@ -418,7 +495,7 @@ router.patch("/projects/:id/tasks/:taskId", async (req, res) => {
 // Presentations
 router.get("/projects/:id/presentations", async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = routeId(req.params.id);
     const presentations = await db.select().from(presentationsTable).where(eq(presentationsTable.projectId, id)).orderBy(presentationsTable.createdAt);
     res.json(presentations);
   } catch (err) {
@@ -427,9 +504,9 @@ router.get("/projects/:id/presentations", async (req, res) => {
   }
 });
 
-router.post("/projects/:id/presentations", async (req, res) => {
+router.post("/projects/:id/presentations", editableRoles, async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = routeId(req.params.id);
     const parsed = GeneratePresentationBody.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
     const project = req.project!;
@@ -450,6 +527,148 @@ router.post("/projects/:id/presentations", async (req, res) => {
     res.status(201).json(presentation);
   } catch (err) {
     req.log.error({ err }, "Failed to generate presentation");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Collaboration
+router.get("/projects/:id/members", async (req, res) => {
+  try {
+    const members = await db.select().from(projectMembersTable)
+      .where(eq(projectMembersTable.projectId, routeId(req.params.id)))
+      .orderBy(projectMembersTable.createdAt);
+    res.json(members);
+  } catch (err) {
+    req.log.error({ err }, "Failed to list project members");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/projects/:id/members", ownerOnly, async (req, res) => {
+  try {
+    const parsed = InviteProjectMemberBody.safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
+    const email = parsed.data.email.trim().toLowerCase();
+    const role = parsed.data.role ?? "reviewer";
+    if (!email.includes("@") || !["editor", "reviewer"].includes(role)) {
+      res.status(400).json({ error: "Enter a valid email and role" });
+      return;
+    }
+    const [existing] = await db.select().from(projectMembersTable).where(and(
+      eq(projectMembersTable.projectId, routeId(req.params.id)),
+      eq(projectMembersTable.email, email),
+    ));
+    if (existing) {
+      res.status(409).json({ error: "This person is already invited" });
+      return;
+    }
+    const [member] = await db.insert(projectMembersTable).values({
+      projectId: routeId(req.params.id),
+      email,
+      name: parsed.data.name?.trim() || null,
+      role,
+      status: "invited",
+      invitedBy: req.userId!,
+    }).returning();
+    res.status(201).json(member);
+  } catch (err) {
+    req.log.error({ err }, "Failed to invite project member");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.patch("/projects/:id/members/:memberId", ownerOnly, async (req, res) => {
+  try {
+    const parsed = UpdateProjectMemberBody.safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
+    if (parsed.data.role && !["editor", "reviewer"].includes(parsed.data.role)) {
+      res.status(400).json({ error: "Invalid role" });
+      return;
+    }
+    if (parsed.data.status && !["invited", "active", "revoked"].includes(parsed.data.status)) {
+      res.status(400).json({ error: "Invalid status" });
+      return;
+    }
+    const [member] = await db.update(projectMembersTable)
+      .set({ ...parsed.data, updatedAt: new Date() })
+      .where(and(
+        eq(projectMembersTable.id, routeId(req.params.memberId)),
+        eq(projectMembersTable.projectId, routeId(req.params.id)),
+      ))
+      .returning();
+    if (!member) { res.status(404).json({ error: "Not found" }); return; }
+    res.json(member);
+  } catch (err) {
+    req.log.error({ err }, "Failed to update project member");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/projects/:id/members/:memberId", ownerOnly, async (req, res) => {
+  try {
+    const deleted = await db.delete(projectMembersTable).where(and(
+      eq(projectMembersTable.id, routeId(req.params.memberId)),
+      eq(projectMembersTable.projectId, routeId(req.params.id)),
+    )).returning({ id: projectMembersTable.id });
+    if (deleted.length === 0) { res.status(404).json({ error: "Not found" }); return; }
+    res.status(204).send();
+  } catch (err) {
+    req.log.error({ err }, "Failed to remove project member");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/projects/:id/comments/:itemType/:itemId", async (req, res) => {
+  try {
+    const itemType = req.params.itemType;
+    if (!validReviewItemType(itemType)) { res.status(400).json({ error: "Invalid item type" }); return; }
+    const comments = await db.select().from(projectCommentsTable).where(and(
+      eq(projectCommentsTable.projectId, routeId(req.params.id)),
+      eq(projectCommentsTable.itemType, itemType),
+      eq(projectCommentsTable.itemId, routeId(req.params.itemId)),
+    )).orderBy(projectCommentsTable.createdAt);
+    res.json(comments);
+  } catch (err) {
+    req.log.error({ err }, "Failed to list project comments");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/projects/:id/comments/:itemType/:itemId", async (req, res) => {
+  try {
+    const itemType = req.params.itemType;
+    const parsed = CreateProjectCommentBody.safeParse(req.body);
+    if (!parsed.success || !validReviewItemType(itemType) || !parsed.data.body.trim()) {
+      res.status(400).json({ error: "Invalid comment" });
+      return;
+    }
+    const [comment] = await db.insert(projectCommentsTable).values({
+      projectId: routeId(req.params.id),
+      itemType,
+      itemId: routeId(req.params.itemId),
+      body: parsed.data.body.trim(),
+      authorId: req.userId!,
+      authorName: actorName(req),
+    }).returning();
+    res.status(201).json(comment);
+  } catch (err) {
+    req.log.error({ err }, "Failed to create project comment");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/projects/:id/approval-history/:itemType/:itemId", async (req, res) => {
+  try {
+    const itemType = req.params.itemType;
+    if (!validReviewItemType(itemType)) { res.status(400).json({ error: "Invalid item type" }); return; }
+    const history = await db.select().from(approvalEventsTable).where(and(
+      eq(approvalEventsTable.projectId, routeId(req.params.id)),
+      eq(approvalEventsTable.itemType, itemType),
+      eq(approvalEventsTable.itemId, routeId(req.params.itemId)),
+    )).orderBy(desc(approvalEventsTable.createdAt));
+    res.json(history);
+  } catch (err) {
+    req.log.error({ err }, "Failed to list approval history");
     res.status(500).json({ error: "Internal server error" });
   }
 });

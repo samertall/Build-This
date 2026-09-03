@@ -1,15 +1,17 @@
 import { useParams } from "wouter";
 import { motion } from "framer-motion";
-import { CheckCircle, XCircle, Lightbulb, TrendingUp, Zap, AlertCircle } from "lucide-react";
+import { Lightbulb, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardLayout } from "@/layouts/dashboard-layout";
 import { PageHeader, EmptyState, listContainer, listItem } from "@/components/page-header";
-import { useListRecommendations, useApproveRecommendation, getListRecommendationsQueryKey } from "@workspace/api-client-react";
+import { useListRecommendations, useApproveRecommendation, getListRecommendationsQueryKey, getListApprovalHistoryQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { ApprovalActions } from "@/components/approval-actions";
+import { ReviewThread } from "@/components/review-thread";
 
 function EffortBadge({ effort }: { effort?: string | null }) {
   const map: Record<string, string> = {
@@ -47,12 +49,13 @@ export default function ProjectRecommendationsPage() {
   const { data: recs, isLoading } = useListRecommendations(projectId);
   const approve = useApproveRecommendation();
 
-  const handleApprove = (recId: number, status: "approved" | "rejected") => {
+  const handleApprove = (recId: number, status: "approved" | "rejected", comment?: string) => {
     approve.mutate(
-      { id: projectId, recId, data: { status } },
+      { id: projectId, recId, data: { status, comment } },
       {
         onSuccess: () => {
           void qc.invalidateQueries({ queryKey: getListRecommendationsQueryKey(projectId) });
+          void qc.invalidateQueries({ queryKey: getListApprovalHistoryQueryKey(projectId, "recommendation", recId) });
           toast({ title: status === "approved" ? "Recommendation approved" : "Recommendation rejected" });
         },
       }
@@ -111,17 +114,14 @@ export default function ProjectRecommendationsPage() {
                           <div className="flex items-start justify-between gap-4 mb-5">
                             <h3 className="font-bold text-foreground text-xl tracking-tight leading-snug flex-1">{rec.title}</h3>
                             {rec.approvalStatus === "pending" && (
-                              <div className="flex gap-2 flex-shrink-0 bg-background/50 backdrop-blur border border-border/50 rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-all focus-within:opacity-100 -translate-y-2 group-hover:translate-y-0">
-                                <Button size="icon" variant="ghost" className="h-8 w-8 text-emerald-600 hover:bg-emerald-500/20 hover:text-emerald-700 rounded-full"
-                                  onClick={() => handleApprove(rec.id, "approved")} disabled={approve.isPending} title="Approve">
-                                  <CheckCircle className="w-4 h-4" />
-                                </Button>
-                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:bg-destructive/20 hover:text-destructive rounded-full"
-                                  onClick={() => handleApprove(rec.id, "rejected")} disabled={approve.isPending} title="Reject">
-                                  <XCircle className="w-4 h-4" />
-                                </Button>
-                              </div>
+                              <ApprovalActions
+                                pending={approve.isPending}
+                                onDecision={(status, comment) => handleApprove(rec.id, status, comment)}
+                              />
                             )}
+                          </div>
+                          <div className="mt-4 pt-3 border-t border-border/50">
+                            <ReviewThread projectId={projectId} itemType="recommendation" itemId={rec.id} />
                           </div>
 
                           <div className="flex flex-wrap gap-2.5 mb-6">

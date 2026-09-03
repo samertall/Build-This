@@ -14,6 +14,7 @@ import { DashboardLayout } from "@/layouts/dashboard-layout";
 import { useListPresentations, useGeneratePresentation, getListPresentationsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { ReviewThread } from "@/components/review-thread";
 
 const presentationTypes = ["project-pitch", "ux-review", "stakeholder-update", "design-brief", "research-summary"];
 const audienceTypes = ["stakeholders", "developers", "designers", "executives", "clients", "cross-functional"];
@@ -336,6 +337,7 @@ export default function ProjectPresentationsPage() {
                           <Badge className="bg-primary/15 text-primary hover:bg-primary/20 border-0 font-mono text-[10px] font-black uppercase tracking-widest shadow-none">
                             {pres.slideCount} slides
                           </Badge>
+                           <ReviewThread projectId={projectId} itemType="presentation" itemId={pres.id} label="Comments" />
                         </div>
                       </div>
                     </div>

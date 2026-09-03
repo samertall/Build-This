@@ -39,7 +39,8 @@ export const GetDashboardSummaryResponse = zod.object({
   "status": zod.string(),
   "analysisStatus": zod.string().nullish(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "accessRole": zod.string().optional()
 }))
 })
 
@@ -59,7 +60,8 @@ export const ListProjectsResponseItem = zod.object({
   "status": zod.string(),
   "analysisStatus": zod.string().nullish(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "accessRole": zod.string().optional()
 })
 export const ListProjectsResponse = zod.array(ListProjectsResponseItem)
 
@@ -92,7 +94,8 @@ export const CreateProjectResponse = zod.object({
   "status": zod.string(),
   "analysisStatus": zod.string().nullish(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "accessRole": zod.string().optional()
 })
 
 
@@ -115,7 +118,8 @@ export const GetProjectResponse = zod.object({
   "status": zod.string(),
   "analysisStatus": zod.string().nullish(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "accessRole": zod.string().optional()
 })
 
 
@@ -150,7 +154,8 @@ export const UpdateProjectResponse = zod.object({
   "status": zod.string(),
   "analysisStatus": zod.string().nullish(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "accessRole": zod.string().optional()
 })
 
 
@@ -660,5 +665,162 @@ export const GetProjectStatsResponse = zod.object({
   "sourceCount": zod.number(),
   "estimatedTimeSaved": zod.number()
 })
+
+
+/**
+ * @summary List project members and pending invitations
+ */
+export const ListProjectMembersParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ListProjectMembersResponseItem = zod.object({
+  "id": zod.number(),
+  "projectId": zod.number(),
+  "userId": zod.string().nullish(),
+  "email": zod.string(),
+  "name": zod.string().nullish(),
+  "role": zod.string(),
+  "status": zod.string(),
+  "invitedBy": zod.string(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+export const ListProjectMembersResponse = zod.array(ListProjectMembersResponseItem)
+
+
+/**
+ * @summary Invite a teammate or reviewer to a project
+ */
+export const InviteProjectMemberParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const InviteProjectMemberBody = zod.object({
+  "email": zod.string(),
+  "name": zod.string().optional(),
+  "role": zod.string().optional()
+})
+
+export const InviteProjectMemberResponse = zod.object({
+  "id": zod.number(),
+  "projectId": zod.number(),
+  "userId": zod.string().nullish(),
+  "email": zod.string(),
+  "name": zod.string().nullish(),
+  "role": zod.string(),
+  "status": zod.string(),
+  "invitedBy": zod.string(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Change a project member role or status
+ */
+export const UpdateProjectMemberParams = zod.object({
+  "id": zod.coerce.number(),
+  "memberId": zod.coerce.number()
+})
+
+export const UpdateProjectMemberBody = zod.object({
+  "role": zod.string().optional(),
+  "status": zod.string().optional()
+})
+
+export const UpdateProjectMemberResponse = zod.object({
+  "id": zod.number(),
+  "projectId": zod.number(),
+  "userId": zod.string().nullish(),
+  "email": zod.string(),
+  "name": zod.string().nullish(),
+  "role": zod.string(),
+  "status": zod.string(),
+  "invitedBy": zod.string(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Remove a project member
+ */
+export const RemoveProjectMemberParams = zod.object({
+  "id": zod.coerce.number(),
+  "memberId": zod.coerce.number()
+})
+
+export const RemoveProjectMemberResponse = zod.void()
+
+
+/**
+ * @summary List comments on a project decision or presentation
+ */
+export const ListProjectCommentsParams = zod.object({
+  "id": zod.coerce.number(),
+  "itemType": zod.coerce.string(),
+  "itemId": zod.coerce.number()
+})
+
+export const ListProjectCommentsResponseItem = zod.object({
+  "id": zod.number(),
+  "projectId": zod.number(),
+  "itemType": zod.string(),
+  "itemId": zod.number(),
+  "body": zod.string(),
+  "authorId": zod.string(),
+  "authorName": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+export const ListProjectCommentsResponse = zod.array(ListProjectCommentsResponseItem)
+
+
+/**
+ * @summary Add a comment to a project decision or presentation
+ */
+export const CreateProjectCommentParams = zod.object({
+  "id": zod.coerce.number(),
+  "itemType": zod.coerce.string(),
+  "itemId": zod.coerce.number()
+})
+
+export const CreateProjectCommentBody = zod.object({
+  "body": zod.string()
+})
+
+export const CreateProjectCommentResponse = zod.object({
+  "id": zod.number(),
+  "projectId": zod.number(),
+  "itemType": zod.string(),
+  "itemId": zod.number(),
+  "body": zod.string(),
+  "authorId": zod.string(),
+  "authorName": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary List immutable approval history for a project decision
+ */
+export const ListApprovalHistoryParams = zod.object({
+  "id": zod.coerce.number(),
+  "itemType": zod.coerce.string(),
+  "itemId": zod.coerce.number()
+})
+
+export const ListApprovalHistoryResponseItem = zod.object({
+  "id": zod.number(),
+  "projectId": zod.number(),
+  "itemType": zod.string(),
+  "itemId": zod.number(),
+  "status": zod.string(),
+  "comment": zod.string().nullish(),
+  "actorId": zod.string(),
+  "actorName": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+export const ListApprovalHistoryResponse = zod.array(ListApprovalHistoryResponseItem)
 
 
