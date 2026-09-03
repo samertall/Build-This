@@ -47,7 +47,7 @@ function textFor(value: ContentValue): string {
   return String(value);
 }
 
-function orderedContentEntries(
+export function orderedContentEntries(
   content: Record<string, ContentValue>,
   sectionOrder?: string[],
 ): Array<[string, ContentValue]> {

@@ -22,12 +22,12 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ReviewThread } from "@/components/review-thread";
+import { orderedContentEntries, type SlideContent } from "@/lib/presentation-order";
 
 const presentationTypes = ["project-pitch", "ux-review", "stakeholder-update", "design-brief", "research-summary"];
 const audienceTypes = ["stakeholders", "developers", "designers", "executives", "clients", "cross-functional"];
 
-type SlideContent = Record<string, unknown>;
-type Slide = { id: number; title: string; layout: string; content: SlideContent };
+type Slide = { id: number; title: string; layout: string; content: SlideContent; sectionOrder?: string[] };
 
 const layoutIcons: Record<string, React.ElementType> = {
   cover: Layout,
@@ -40,12 +40,12 @@ const layoutIcons: Record<string, React.ElementType> = {
   conclusion: CheckCircle,
 };
 
-function renderSlideContent(content: SlideContent, layout: string, large = false): React.ReactNode {
+function renderSlideContent(content: SlideContent, layout: string, large = false, sectionOrder?: string[]): React.ReactNode {
   if (!content || Object.keys(content).length === 0) {
     return <p className={`text-muted-foreground italic font-medium ${large ? 'text-2xl' : 'text-sm'}`}>No content available for this slide.</p>;
   }
 
-  const entries = Object.entries(content);
+  const entries = orderedContentEntries(content, sectionOrder);
 
   return (
     <div className={large ? "space-y-8" : "space-y-4"}>
@@ -219,7 +219,7 @@ function DeckViewer({ projectId, presentation, onClose }: { projectId: number; p
                </div>
                <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-foreground tracking-tighter mb-10 md:mb-14 leading-tight relative z-10">{slide.title}</h2>
                <div className="flex-1 overflow-y-auto print:overflow-visible relative z-10">
-                  {renderSlideContent(slide.content, slide.layout, true)}
+                  {renderSlideContent(slide.content, slide.layout, true, slide.sectionOrder)}
                </div>
             </div>
           );
