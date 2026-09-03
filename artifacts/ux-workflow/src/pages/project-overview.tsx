@@ -1,11 +1,11 @@
 import { useParams, Link } from "wouter";
 import { motion, type Variants } from "framer-motion";
-import { Brain, FlaskConical, Target, Lightbulb, Route, Star, ListChecks, Presentation, Database, AlertTriangle, ChevronRight } from "lucide-react";
+import { Brain, FlaskConical, Target, Lightbulb, Route, Star, ListChecks, Presentation, Database, AlertTriangle, ChevronRight, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardLayout } from "@/layouts/dashboard-layout";
-import { useGetProject, useGetProjectStats } from "@workspace/api-client-react";
+import { useGetProject, useGetProjectStats, useListInsights, useListProblems, useListRecommendations } from "@workspace/api-client-react";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
@@ -23,12 +23,23 @@ function StatusBadge({ status }: { status?: string | null }) {
   return <Badge className={`${map[s] ?? map.pending} capitalize font-mono font-black text-[10px] tracking-wider shadow-sm px-3 py-1`}>{s}</Badge>;
 }
 
+function ProgressBar({ value }: { value: number }) {
+  return (
+    <div className="w-full h-2.5 bg-muted/60 rounded-full overflow-hidden shadow-inner">
+      <div className="h-full bg-primary transition-all duration-700 ease-out rounded-full shadow-[0_0_10px_rgba(24,147,247,0.5)]" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+    </div>
+  );
+}
+
 export default function ProjectOverviewPage() {
   const { id } = useParams<{ id: string }>();
   const projectId = parseInt(id ?? "0");
 
   const { data: project, isLoading: pLoading } = useGetProject(projectId);
   const { data: stats, isLoading: sLoading } = useGetProjectStats(projectId);
+  const { data: insights } = useListInsights(projectId);
+  const { data: problems } = useListProblems(projectId);
+  const { data: recommendations } = useListRecommendations(projectId);
 
   const sections = [
     { label: "Sources", href: `/projects/${projectId}/sources`, icon: Database, count: stats?.sourceCount ?? 0, desc: "Research materials, URLs, and notes", color: "text-blue-500 bg-blue-500/10 border-blue-500/20" },
@@ -69,6 +80,75 @@ export default function ProjectOverviewPage() {
     );
   }
 
+  const insightsApproved = stats?.approvedInsights ?? 0;
+  const insightsTotal = stats?.insightCount ?? 0;
+  const problemsApproved = stats?.approvedProblems ?? 0;
+  const problemsTotal = stats?.problemCount ?? 0;
+  const recsApproved = stats?.approvedRecommendations ?? 0;
+  const recsTotal = stats?.recommendationCount ?? 0;
+
+  const pendingInsights = (insights ?? []).filter(i => i.approvalStatus === "pending").slice(0, 2);
+  const pendingProblems = (problems ?? []).filter(p => p.approvalStatus === "pending").slice(0, 2);
+  const pendingRecs = (recommendations ?? []).filter(r => r.approvalStatus === "pending").slice(0, 2);
+
+  let nextStep = {
+    title: "Add Sources",
+    desc: "Upload research materials, URLs, and notes to begin.",
+    href: `/projects/${projectId}/sources`,
+    icon: Database,
+    color: "bg-blue-500 text-white",
+    glow: "shadow-[0_0_30px_rgba(59,130,246,0.3)]"
+  };
+
+  if ((stats?.sourceCount ?? 0) > 0) {
+    if (project.analysisStatus === "pending") {
+      nextStep = {
+        title: "Initialize Agents",
+        desc: `You have ${stats?.sourceCount} sources ready. Run the AI swarm.`,
+        href: `/projects/${projectId}/analyze`,
+        icon: Brain,
+        color: "bg-primary text-primary-foreground",
+        glow: "shadow-[0_0_30px_rgba(24,147,247,0.3)]"
+      };
+    } else if (insightsTotal > 0 && insightsApproved < insightsTotal) {
+      nextStep = {
+        title: "Review Insights",
+        desc: `You have ${insightsTotal - insightsApproved} insights pending approval.`,
+        href: `/projects/${projectId}/insights`,
+        icon: FlaskConical,
+        color: "bg-violet-500 text-white",
+        glow: "shadow-[0_0_30px_rgba(139,92,246,0.3)]"
+      };
+    } else if (problemsTotal > 0 && problemsApproved < problemsTotal) {
+      nextStep = {
+        title: "Review Problems",
+        desc: `You have ${problemsTotal - problemsApproved} problems pending approval.`,
+        href: `/projects/${projectId}/problems`,
+        icon: Target,
+        color: "bg-rose-500 text-white",
+        glow: "shadow-[0_0_30px_rgba(244,63,94,0.3)]"
+      };
+    } else if (recsTotal > 0 && recsApproved < recsTotal) {
+      nextStep = {
+        title: "Review Recommendations",
+        desc: `You have ${recsTotal - recsApproved} recommendations pending approval.`,
+        href: `/projects/${projectId}/recommendations`,
+        icon: Lightbulb,
+        color: "bg-amber-500 text-white",
+        glow: "shadow-[0_0_30px_rgba(245,158,11,0.3)]"
+      };
+    } else if (recsTotal > 0 && recsApproved === recsTotal) {
+      nextStep = {
+        title: "Generate Presentation",
+        desc: "All outputs approved. Generate your stakeholder deck.",
+        href: `/projects/${projectId}/presentations`,
+        icon: Presentation,
+        color: "bg-sky-500 text-white",
+        glow: "shadow-[0_0_30px_rgba(14,165,233,0.3)]"
+      };
+    }
+  }
+
   return (
     <DashboardLayout projectId={projectId}>
       <div className="p-6 md:p-8 max-w-[1400px] mx-auto w-full">
@@ -92,31 +172,98 @@ export default function ProjectOverviewPage() {
           </div>
         </motion.div>
 
-        {/* Analyze CTA Banner */}
-        {(stats?.sourceCount ?? 0) > 0 && project.analysisStatus === "pending" && (
-          <motion.div initial="hidden" animate="visible" custom={2} variants={fadeUp} className="mb-12">
-            <div className="relative overflow-hidden rounded-3xl border-2 border-primary/30 bg-primary/5 p-8 shadow-sm group">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/15 rounded-full blur-[80px] pointer-events-none" />
-              <div className="absolute top-0 right-0 p-12 -mt-8 -mr-8 opacity-[0.05] pointer-events-none transition-transform duration-1000 group-hover:scale-110 group-hover:-rotate-12">
-                <Brain className="w-64 h-64 text-primary" />
-              </div>
-              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
-                <div className="max-w-2xl">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="relative flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-                    </div>
-                    <h3 className="text-2xl font-black text-foreground tracking-tight">Pipeline Ready for Analysis</h3>
+        {/* Decision Readiness */}
+        {((stats?.sourceCount ?? 0) > 0 || (stats?.insightCount ?? 0) > 0) && (
+          <motion.div initial="hidden" animate="visible" custom={1} variants={fadeUp} className="mb-12">
+            <div className="flex flex-col xl:flex-row gap-6">
+              <Card className="flex-1 glass-card border-border/50 rounded-3xl overflow-hidden relative group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
+                <CardContent className="p-8">
+                  <div className="flex items-center justify-between mb-8">
+                    <h2 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-3">
+                      <CheckCircle className="w-6 h-6 text-primary" /> Decision Readiness
+                    </h2>
                   </div>
-                  <p className="text-muted-foreground text-base font-medium">You have {stats?.sourceCount} source{stats?.sourceCount !== 1 ? "s" : ""} ready. Run the AI agent swarm to synthesize insights, frame problems, and generate recommendations.</p>
-                </div>
-                <Link href={`/projects/${projectId}/analyze`} className="shrink-0">
-                  <button className="flex items-center justify-center gap-3 bg-primary hover:bg-primary/90 text-primary-foreground font-black text-lg px-8 py-4 rounded-2xl transition-all shadow-[0_0_30px_rgba(24,147,247,0.3)] hover:shadow-[0_0_50px_rgba(24,147,247,0.5)] hover:-translate-y-1 w-full md:w-auto">
-                    <Brain className="w-6 h-6" /> Initialize Agents
-                  </button>
-                </Link>
-              </div>
+
+                  <div className="grid md:grid-cols-3 gap-8">
+                    {/* Insights Progress */}
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between text-sm mb-2 font-bold">
+                          <span className="text-foreground">Insights</span>
+                          <span className="text-muted-foreground">{insightsApproved} / {insightsTotal}</span>
+                        </div>
+                        <ProgressBar value={insightsTotal ? (insightsApproved / insightsTotal) * 100 : 0} />
+                      </div>
+                      {pendingInsights.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest font-mono">Needs Review</p>
+                          {pendingInsights.map(i => (
+                            <div key={i.id} className="text-xs font-semibold text-muted-foreground bg-muted/40 p-3 rounded-xl border border-border/50 line-clamp-2 leading-snug">"{i.insight}"</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Problems Progress */}
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between text-sm mb-2 font-bold">
+                          <span className="text-foreground">Problems</span>
+                          <span className="text-muted-foreground">{problemsApproved} / {problemsTotal}</span>
+                        </div>
+                        <ProgressBar value={problemsTotal ? (problemsApproved / problemsTotal) * 100 : 0} />
+                      </div>
+                      {pendingProblems.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest font-mono">Needs Review</p>
+                          {pendingProblems.map(p => (
+                            <div key={p.id} className="text-xs font-semibold text-muted-foreground bg-muted/40 p-3 rounded-xl border border-border/50 line-clamp-2 leading-snug">"{p.statement}"</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Recommendations Progress */}
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between text-sm mb-2 font-bold">
+                          <span className="text-foreground">Recommendations</span>
+                          <span className="text-muted-foreground">{recsApproved} / {recsTotal}</span>
+                        </div>
+                        <ProgressBar value={recsTotal ? (recsApproved / recsTotal) * 100 : 0} />
+                      </div>
+                      {pendingRecs.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest font-mono">Needs Review</p>
+                          {pendingRecs.map(r => (
+                            <div key={r.id} className="text-xs font-semibold text-muted-foreground bg-muted/40 p-3 rounded-xl border border-border/50 line-clamp-2 leading-snug">"{r.title}"</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="w-full xl:w-[380px] shrink-0 border-border/50 rounded-3xl overflow-hidden bg-card shadow-sm flex flex-col group relative">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-[50px] pointer-events-none group-hover:scale-110 transition-transform duration-700" />
+                <CardContent className="p-8 flex flex-col h-full items-start justify-center relative z-10">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest font-mono mb-6 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" /> Next Best Step
+                  </p>
+                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-xl ${nextStep.color} ${nextStep.glow} transform transition-transform group-hover:scale-105 group-hover:rotate-3`}>
+                    <nextStep.icon className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-3xl font-black text-foreground tracking-tight mb-3">{nextStep.title}</h3>
+                  <p className="text-sm font-semibold text-muted-foreground mb-8 leading-relaxed">{nextStep.desc}</p>
+                  <Link href={nextStep.href} className="w-full mt-auto block">
+                    <button className={`w-full h-12 rounded-xl font-black text-base transition-all hover:-translate-y-1 hover:shadow-lg ${nextStep.color} ${nextStep.glow}`}>
+                      Continue <ChevronRight className="w-5 h-5 ml-1 inline-block" />
+                    </button>
+                  </Link>
+                </CardContent>
+              </Card>
             </div>
           </motion.div>
         )}

@@ -1,11 +1,13 @@
 import { Link, useLocation } from "wouter";
 import { motion, useMotionValue, animate, useTransform, useReducedMotion } from "framer-motion";
-import { useEffect } from "react";
-import { Plus, FolderOpen, Brain, CheckCircle, ListChecks, Presentation, Clock, ArrowRight, Sparkles } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { Plus, FolderOpen, Brain, CheckCircle, ListChecks, Presentation, Clock, ArrowRight, Search, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DashboardLayout } from "@/layouts/dashboard-layout";
 import { useGetDashboardSummary, useListProjects } from "@workspace/api-client-react";
 
@@ -41,6 +43,20 @@ export default function DashboardPage() {
   const [, setLocation] = useLocation();
   const { data: summary, isLoading: summaryLoading } = useGetDashboardSummary();
   const { data: projects, isLoading: projectsLoading } = useListProjects();
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const filteredProjects = useMemo(() => {
+    if (!projects) return [];
+    return projects.filter(p => {
+      const q = searchQuery.toLowerCase();
+      const matchesSearch = !q || [p.name, p.description, p.industry, p.productType].some(v => v?.toLowerCase().includes(q));
+      const s = p.analysisStatus || "pending";
+      const matchesStatus = statusFilter === "all" || s === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [projects, searchQuery, statusFilter]);
 
   const statCards = [
     { label: "Projects", value: summary?.totalProjects ?? 0, icon: FolderOpen, color: "text-primary", bg: "bg-primary/10", border: "border-primary/20", glow: "rgba(24,147,247,0.15)" },
@@ -97,13 +113,46 @@ export default function DashboardPage() {
 
         {/* Projects Section */}
         <motion.div {...springIn(8)}>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-black text-foreground tracking-tight">Your Projects</h2>
-            <Link href="/projects/new">
-              <span className="text-sm font-bold text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 group">
-                New <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
-              </span>
-            </Link>
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div className="flex items-center gap-3">
+              <h2 className="text-3xl font-black text-foreground tracking-tight">Project Repository</h2>
+              <Badge variant="secondary" className="font-mono text-sm px-3 py-1 shadow-sm">{filteredProjects?.length ?? 0}</Badge>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+              <div className="relative w-full sm:w-[280px]">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, industry..."
+                  aria-label="Search projects"
+                  className="pl-10 pr-10 h-12 w-full bg-card rounded-xl font-semibold border-border/60 focus:border-primary transition-colors"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    aria-label="Clear project search"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-12 w-full sm:w-[160px] bg-card rounded-xl font-semibold border-border/60 focus:border-primary transition-colors">
+                  <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-border/60">
+                  <SelectItem value="all" className="font-semibold">All Statuses</SelectItem>
+                  <SelectItem value="pending" className="font-semibold">Pending</SelectItem>
+                  <SelectItem value="running" className="font-semibold">Running</SelectItem>
+                  <SelectItem value="complete" className="font-semibold">Complete</SelectItem>
+                  <SelectItem value="error" className="font-semibold">Error</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {projectsLoading ? (
@@ -114,7 +163,7 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-          ) : !projects || projects.length === 0 ? (
+          ) : projects?.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -146,9 +195,24 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             </motion.div>
+          ) : filteredProjects?.length === 0 ? (
+            <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}>
+              <Card className="border-dashed border-2 border-border/60 bg-card/20 rounded-3xl">
+                <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-muted/50 border border-border flex items-center justify-center mb-6">
+                    <Search className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-xl font-black text-foreground mb-2">No matching projects</h3>
+                  <p className="text-muted-foreground text-sm mb-6 max-w-sm font-semibold">We couldn't find any projects matching your current search and filters.</p>
+                  <Button variant="outline" onClick={() => { setSearchQuery(""); setStatusFilter("all"); }} className="rounded-xl h-11 font-bold">
+                    Clear Filters
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.map((project, i) => (
+              {filteredProjects.map((project, i) => (
                 <motion.div key={project.id} {...springIn(i)} className="h-full">
                   <motion.div
                     whileHover={{ y: -6, boxShadow: "0 24px 50px rgba(24,147,247,0.12)" }}
@@ -198,7 +262,7 @@ export default function DashboardPage() {
               ))}
 
               {/* New project card */}
-              <motion.div {...springIn(projects.length)}>
+              <motion.div {...springIn(filteredProjects.length)}>
                 <Link href="/projects/new">
                   <motion.div whileHover={{ y: -6 }} className="h-full min-h-[220px]">
                     <Card className="border-dashed border-2 border-border/60 bg-card/20 hover:border-primary/40 hover:bg-primary/5 transition-all duration-300 cursor-pointer group h-full rounded-3xl">

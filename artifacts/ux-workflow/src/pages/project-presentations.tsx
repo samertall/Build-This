@@ -1,7 +1,7 @@
 import { useParams } from "wouter";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Presentation, Plus, Loader2, Layers, ChevronDown, ChevronUp, FileText, CheckCircle, Target, Lightbulb, Users, TrendingUp, Layout, List } from "lucide-react";
+import { Presentation, Plus, Loader2, Layers, FileText, CheckCircle, Target, Lightbulb, Users, TrendingUp, Layout, List, Printer, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,27 +32,28 @@ const layoutIcons: Record<string, React.ElementType> = {
   conclusion: CheckCircle,
 };
 
-function renderSlideContent(content: SlideContent, layout: string): React.ReactNode {
+function renderSlideContent(content: SlideContent, layout: string, large = false): React.ReactNode {
   if (!content || Object.keys(content).length === 0) {
-    return <p className="text-muted-foreground text-sm italic font-medium">No content available for this slide.</p>;
+    return <p className={`text-muted-foreground italic font-medium ${large ? 'text-2xl' : 'text-sm'}`}>No content available for this slide.</p>;
   }
 
   const entries = Object.entries(content);
 
   return (
-    <div className="space-y-4">
+    <div className={large ? "space-y-8" : "space-y-4"}>
       {entries.map(([key, value]) => {
         const label = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+        const labelClass = `${large ? "text-sm mb-4" : "text-[10px] mb-2"} font-black text-muted-foreground uppercase tracking-widest font-mono`;
 
         if (Array.isArray(value)) {
           return (
             <div key={key}>
-              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest font-mono mb-2">{label}</p>
-              <ul className="space-y-2">
+              <p className={labelClass}>{label}</p>
+              <ul className={large ? "space-y-4" : "space-y-2"}>
                 {(value as unknown[]).map((item, i) => (
-                  <li key={i} className="flex items-start gap-3 text-sm text-foreground bg-card border border-border p-3 rounded-xl shadow-sm">
-                    <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 text-xs font-black">{i + 1}</span>
-                    <span className="leading-relaxed font-semibold mt-0.5">{typeof item === "object" ? JSON.stringify(item) : String(item)}</span>
+                  <li key={i} className={`flex items-start gap-4 text-foreground bg-card border border-border rounded-2xl shadow-sm ${large ? 'text-xl p-5 md:p-6' : 'text-sm p-3'}`}>
+                    <span className={`${large ? 'w-10 h-10 text-base' : 'w-6 h-6 text-xs'} rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 font-black`}>{i + 1}</span>
+                    <span className={`leading-relaxed font-semibold ${large ? 'mt-1.5' : 'mt-0.5'}`}>{typeof item === "object" ? JSON.stringify(item) : String(item)}</span>
                   </li>
                 ))}
               </ul>
@@ -64,12 +65,12 @@ function renderSlideContent(content: SlideContent, layout: string): React.ReactN
           const subEntries = Object.entries(value as Record<string, unknown>);
           return (
             <div key={key}>
-              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest font-mono mb-2">{label}</p>
-              <div className="grid grid-cols-2 gap-3">
+              <p className={labelClass}>{label}</p>
+              <div className={`grid grid-cols-2 ${large ? "gap-6" : "gap-3"}`}>
                 {subEntries.map(([k, v]) => (
-                  <div key={k} className="bg-muted/40 border border-border/50 rounded-xl p-3.5">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest font-mono mb-1">{k.replace(/_/g, " ")}</p>
-                    <p className="text-sm text-foreground font-semibold leading-snug">{String(v)}</p>
+                  <div key={k} className={`bg-muted/40 border border-border/50 rounded-2xl ${large ? 'p-6' : 'p-3.5'}`}>
+                    <p className={`${large ? 'text-xs' : 'text-[10px]'} font-black text-muted-foreground uppercase tracking-widest font-mono mb-2`}>{k.replace(/_/g, " ")}</p>
+                    <p className={`${large ? 'text-2xl' : 'text-sm'} text-foreground font-semibold leading-snug`}>{String(v)}</p>
                   </div>
                 ))}
               </div>
@@ -79,8 +80,8 @@ function renderSlideContent(content: SlideContent, layout: string): React.ReactN
 
         return (
           <div key={key}>
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest font-mono mb-2">{label}</p>
-            <p className="text-sm text-foreground leading-relaxed font-semibold bg-muted/40 border border-border/50 rounded-xl p-4">{String(value)}</p>
+            <p className={labelClass}>{label}</p>
+            <p className={`text-foreground leading-relaxed font-semibold bg-muted/40 border border-border/50 rounded-2xl ${large ? 'text-2xl p-8 md:p-10' : 'text-sm p-4'}`}>{String(value)}</p>
           </div>
         );
       })}
@@ -88,57 +89,70 @@ function renderSlideContent(content: SlideContent, layout: string): React.ReactN
   );
 }
 
-function SlidePreview({ slide, index }: { slide: Slide; index: number }) {
-  const [expanded, setExpanded] = useState(false);
-  const Icon = layoutIcons[slide.layout?.toLowerCase()] ?? FileText;
-
+function DeckViewer({ presentation, onClose }: { presentation: any, onClose: () => void }) {
+  const slides = presentation.slides || [];
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.4 }}
-      className="border border-border rounded-2xl overflow-hidden group bg-card shadow-sm hover:shadow-md transition-all duration-300"
-    >
-      <button
-        className="w-full flex items-center justify-between p-5 hover:bg-muted/30 transition-colors text-left"
-        onClick={() => setExpanded(e => !e)}
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary border border-primary/20 group-hover:scale-105 transition-transform">
-            <Icon className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-xs font-mono font-black text-muted-foreground bg-muted px-2 py-0.5 rounded-md">#{index + 1}</span>
-              <span className="font-black text-foreground text-base leading-none tracking-tight">{slide.title}</span>
-            </div>
-            <Badge variant="outline" className="text-[10px] font-mono font-black border-border text-muted-foreground uppercase tracking-widest">{slide.layout}</Badge>
-          </div>
-        </div>
-        <div className="w-10 h-10 flex items-center justify-center rounded-full group-hover:bg-muted transition-colors flex-shrink-0">
-          {expanded ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
-        </div>
-      </button>
+    <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-6">
+       <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          #deck-print-area, #deck-print-area * { visibility: visible; }
+          #deck-print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100vw;
+            margin: 0;
+            padding: 0;
+            background: white;
+            --background: 0 0% 100%;
+            --foreground: 215 50% 15%;
+            --muted: 212 30% 94%;
+            --muted-foreground: 215 25% 45%;
+            --card: 0 0% 100%;
+            --card-foreground: 215 50% 15%;
+            --border: 212 30% 88%;
+            --primary: 207 93% 53%;
+            --primary-foreground: 0 0% 100%;
+          }
+          .slide-container { page-break-after: always; width: 100vw; height: 100vh; border: none !important; border-radius: 0 !important; box-shadow: none !important; background: white !important; display: flex; flex-direction: column; justify-content: center; margin: 0; }
+          @page { size: landscape; margin: 0; }
+        }
+      `}</style>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden bg-card p-4 rounded-2xl border border-border shadow-sm mb-8">
+         <div className="flex items-center gap-4">
+           <Button onClick={onClose} variant="ghost" className="h-10 rounded-xl font-bold"><ChevronLeft className="w-5 h-5 mr-1"/> Back</Button>
+           <div className="h-6 w-px bg-border hidden sm:block" />
+           <h2 className="text-xl font-black text-foreground tracking-tight">{presentation.title}</h2>
+         </div>
+         <Button onClick={() => window.print()} className="bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-md h-10 px-6 rounded-xl">
+           <Printer className="w-4 h-4 mr-2"/> Print / PDF
+         </Button>
+      </div>
 
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="overflow-hidden"
-          >
-            <div className="p-6 border-t border-border bg-background/50">
-              <div className="mb-4 flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span className="text-xs font-black text-muted-foreground uppercase tracking-widest font-mono">Slide Content</span>
-              </div>
-              {renderSlideContent(slide.content, slide.layout)}
+      <div id="deck-print-area" className="flex flex-col gap-12 bg-muted/10 p-4 sm:p-8 lg:p-12 rounded-[2.5rem] border border-border/50">
+        {slides.length === 0 && <p className="text-center py-20 text-muted-foreground font-bold">No slides generated yet.</p>}
+        {slides.map((slide: any, i: number) => {
+          const Icon = layoutIcons[slide.layout?.toLowerCase()] ?? FileText;
+          return (
+            <div key={i} className="slide-container aspect-[16/9] w-full max-w-5xl mx-auto bg-card border-2 border-border shadow-2xl rounded-3xl p-10 md:p-16 flex flex-col relative overflow-hidden group">
+               <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/3 rounded-full blur-[120px] pointer-events-none" />
+               <div className="flex items-center gap-4 mb-8 md:mb-12 relative z-10">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                     <Icon className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-mono font-black text-muted-foreground uppercase tracking-widest block mb-1">Slide {i + 1} &bull; {slide.layout}</span>
+                  </div>
+               </div>
+               <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-foreground tracking-tighter mb-10 md:mb-14 leading-tight relative z-10">{slide.title}</h2>
+               <div className="flex-1 overflow-y-auto print:overflow-visible relative z-10">
+                  {renderSlideContent(slide.content, slide.layout, true)}
+               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          );
+        })}
+      </div>
     </motion.div>
   );
 }
@@ -159,7 +173,8 @@ export default function ProjectPresentationsPage() {
     audience: "stakeholders",
     slideCount: "9",
   });
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+
+  const [viewingDeck, setViewingDeck] = useState<any | null>(null);
 
   const up = (f: string, v: string) => setForm(p => ({ ...p, [f]: v }));
 
@@ -185,6 +200,16 @@ export default function ProjectPresentationsPage() {
       }
     );
   };
+
+  if (viewingDeck) {
+    return (
+      <DashboardLayout projectId={projectId}>
+        <div className="p-6 md:p-8 max-w-[1400px] mx-auto w-full">
+          <DeckViewer presentation={viewingDeck} onClose={() => setViewingDeck(null)} />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout projectId={projectId}>
@@ -288,80 +313,46 @@ export default function ProjectPresentationsPage() {
           </motion.div>
         ) : (
           <div className="space-y-6">
-            {presentations.map((pres, i) => {
-              const slides = (pres.slides as unknown as Slide[]) ?? [];
-              const isExp = expandedId === pres.id;
-              return (
-                <motion.div key={pres.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1, duration: 0.4 }}>
-                  <Card className={`border-border bg-card overflow-hidden transition-all duration-300 rounded-3xl ${isExp ? 'shadow-xl ring-2 ring-primary/30' : 'shadow-sm hover:shadow-md'}`}>
-                    <div
-                      className="p-6 sm:p-8 cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5"
-                      onClick={() => setExpandedId(isExp ? null : pres.id)}
-                    >
-                      <div className="flex items-start gap-6">
-                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 ${isExp ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-105' : 'bg-primary/10 text-primary border border-primary/20'}`}>
-                          <Presentation className="w-8 h-8" />
-                        </div>
-                        <div>
-                          <h3 className="text-2xl font-black text-foreground tracking-tight mb-3">{pres.title}</h3>
-                          <div className="flex gap-2 flex-wrap items-center">
-                            {pres.presentationType && (
-                              <Badge variant="secondary" className="font-mono text-[10px] font-black uppercase tracking-widest capitalize">{pres.presentationType?.replace(/-/g, " ")}</Badge>
-                            )}
-                            {pres.audience && (
-                              <Badge variant="secondary" className="font-mono text-[10px] font-black uppercase tracking-widest capitalize">{pres.audience}</Badge>
-                            )}
-                            <Badge className="bg-primary/15 text-primary hover:bg-primary/20 border-0 font-mono text-[10px] font-black uppercase tracking-widest shadow-none">
-                              {pres.slideCount} slides
-                            </Badge>
-                          </div>
+            {presentations.map((pres, i) => (
+              <motion.div key={pres.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1, duration: 0.4 }}>
+                <Card className={`border-border bg-card overflow-hidden transition-all duration-300 rounded-3xl shadow-sm hover:shadow-md group`}>
+                  <div
+                    className="p-6 sm:p-8 cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5"
+                    onClick={() => setViewingDeck(pres)}
+                  >
+                    <div className="flex items-start gap-6">
+                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 bg-primary/10 text-primary border border-primary/20 group-hover:scale-105 group-hover:shadow-[0_0_20px_rgba(24,147,247,0.2)]`}>
+                        <Presentation className="w-8 h-8" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-black text-foreground tracking-tight mb-3 group-hover:text-primary transition-colors">{pres.title}</h3>
+                        <div className="flex gap-2 flex-wrap items-center">
+                          {pres.presentationType && (
+                            <Badge variant="secondary" className="font-mono text-[10px] font-black uppercase tracking-widest capitalize">{pres.presentationType?.replace(/-/g, " ")}</Badge>
+                          )}
+                          {pres.audience && (
+                            <Badge variant="secondary" className="font-mono text-[10px] font-black uppercase tracking-widest capitalize">{pres.audience}</Badge>
+                          )}
+                          <Badge className="bg-primary/15 text-primary hover:bg-primary/20 border-0 font-mono text-[10px] font-black uppercase tracking-widest shadow-none">
+                            {pres.slideCount} slides
+                          </Badge>
                         </div>
                       </div>
-
-                      <Button
-                        variant={isExp ? "default" : "outline"}
-                        size="lg"
-                        className={`shrink-0 transition-all h-12 rounded-xl font-bold ${isExp ? "bg-primary text-primary-foreground shadow-sm" : "border-border text-foreground hover:bg-muted"}`}
-                        onClick={(e) => { e.stopPropagation(); setExpandedId(isExp ? null : pres.id); }}
-                      >
-                        <Layers className="w-5 h-5 mr-2" />
-                        {isExp ? "Close Deck" : "Review Slides"}
-                      </Button>
                     </div>
 
-                    <AnimatePresence>
-                      {isExp && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                          className="border-t border-border"
-                        >
-                          <div className="p-6 sm:p-8 bg-muted/10">
-                            <div className="flex items-center justify-between mb-8">
-                              <h4 className="text-lg font-black text-foreground tracking-tight flex items-center gap-3">
-                                <span className="w-2.5 h-2.5 rounded-full bg-primary inline-block" />
-                                {slides.length} Slide{slides.length !== 1 ? "s" : ""} Structure
-                              </h4>
-                              <Badge variant="outline" className="font-mono text-xs font-black text-muted-foreground uppercase tracking-widest">
-                                {pres.presentationType?.replace(/-/g, " ")} · {pres.audience}
-                              </Badge>
-                            </div>
-                            <div className="space-y-4">
-                              {slides.length > 0
-                                ? slides.map((slide, sIdx) => <SlidePreview key={slide.id ?? sIdx} slide={slide} index={sIdx} />)
-                                : <p className="text-muted-foreground text-sm text-center py-12 font-semibold">No slides found in this presentation.</p>
-                              }
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </Card>
-                </motion.div>
-              );
-            })}
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className={`shrink-0 transition-all h-12 rounded-xl font-bold border-border text-foreground hover:bg-muted group-hover:border-primary/50 group-hover:bg-primary/5`}
+                      onClick={(e) => { e.stopPropagation(); setViewingDeck(pres); }}
+                    >
+                      <Layers className="w-5 h-5 mr-2 text-primary" />
+                      View Stakeholder Deck
+                    </Button>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
           </div>
         )}
       </div>
