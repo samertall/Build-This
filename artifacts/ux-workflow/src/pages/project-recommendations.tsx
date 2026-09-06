@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ApprovalActions } from "@/components/approval-actions";
 import { ReviewThread } from "@/components/review-thread";
+import { trackEvent } from "@/lib/analytics";
 
 function EffortBadge({ effort }: { effort?: string | null }) {
   const map: Record<string, string> = {
@@ -54,6 +55,7 @@ export default function ProjectRecommendationsPage() {
       { id: projectId, recId, data: { status, comment } },
       {
         onSuccess: () => {
+          trackEvent("recommendation_reviewed", { decision: status });
           void qc.invalidateQueries({ queryKey: getListRecommendationsQueryKey(projectId) });
           void qc.invalidateQueries({ queryKey: getListApprovalHistoryQueryKey(projectId, "recommendation", recId) });
           toast({ title: status === "approved" ? "Recommendation approved" : "Recommendation rejected" });

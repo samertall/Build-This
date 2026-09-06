@@ -9,6 +9,7 @@ import { DashboardLayout } from "@/layouts/dashboard-layout";
 import { useRunAnalysis, useGetProject, getGetProjectQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { trackEvent } from "@/lib/analytics";
 
 const agents = [
   { id: "research", label: "Research Synthesis", icon: FlaskConical, color: "text-blue-600 bg-blue-100 border-blue-200", desc: "Clusters insights from source materials into evidence-linked findings" },
@@ -44,6 +45,15 @@ export default function ProjectAnalyzePage() {
       { id: projectId, data: { agentTypes: Array.from(selected) } },
       {
         onSuccess: (data: typeof result) => {
+          trackEvent("analysis_completed", {
+            agent_count: selected.size,
+            all_agents: selected.size === agents.length,
+            insights_generated: data?.insightsGenerated ?? 0,
+            problems_generated: data?.problemsGenerated ?? 0,
+            recommendations_generated: data?.recommendationsGenerated ?? 0,
+            features_generated: data?.featuresGenerated ?? 0,
+            tasks_generated: data?.tasksGenerated ?? 0,
+          });
           setResult(data);
           void qc.invalidateQueries({ queryKey: getGetProjectQueryKey(projectId) });
           toast({ title: "Analysis complete", description: data?.message ?? "Agents finished running." });

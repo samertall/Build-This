@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ReviewThread } from "@/components/review-thread";
 import { renderSlideContent } from "@/lib/presentation-content";
 import type { SlideContent } from "@/lib/presentation-order";
+import { trackEvent } from "@/lib/analytics";
 
 const presentationTypes = ["project-pitch", "ux-review", "stakeholder-update", "design-brief", "research-summary"];
 const audienceTypes = ["stakeholders", "developers", "designers", "executives", "clients", "cross-functional"];
@@ -67,6 +68,7 @@ function ExportButtons({ projectId, presentation }: { projectId: number; present
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
+      trackEvent("presentation_downloaded", { format });
       setExportState(null);
       toast({
         title: `${format.toUpperCase()} downloaded`,
@@ -276,6 +278,11 @@ export default function ProjectPresentationsPage() {
       },
       {
         onSuccess: () => {
+          trackEvent("presentation_generated", {
+            presentation_type: form.presentationType,
+            audience: form.audience,
+            slide_count: parseInt(form.slideCount),
+          });
           void qc.invalidateQueries({ queryKey: getListPresentationsQueryKey(projectId) });
           setOpen(false);
           setForm({ title: "", presentationType: "project-pitch", audience: "stakeholders", slideCount: "9" });

@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ApprovalActions } from "@/components/approval-actions";
 import { ReviewThread } from "@/components/review-thread";
+import { trackEvent } from "@/lib/analytics";
 
 function ApprovalBadge({ status }: { status?: string | null }) {
   if (status === "approved") return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px] font-mono shadow-none uppercase tracking-widest font-bold">Approved</Badge>;
@@ -33,6 +34,7 @@ export default function ProjectProblemsPage() {
       { id: projectId, problemId, data: { status, comment } },
       {
         onSuccess: () => {
+          trackEvent("problem_reviewed", { decision: status });
           void qc.invalidateQueries({ queryKey: getListProblemsQueryKey(projectId) });
           void qc.invalidateQueries({ queryKey: getListApprovalHistoryQueryKey(projectId, "problem", problemId) });
           toast({ title: status === "approved" ? "Problem approved" : "Problem rejected" });

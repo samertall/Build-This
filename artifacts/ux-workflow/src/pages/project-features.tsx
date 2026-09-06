@@ -11,6 +11,7 @@ import { PageHeader, EmptyState, listContainer, listItem } from "@/components/pa
 import { useListFeatures, useUpdateFeature, getListFeaturesQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { trackEvent } from "@/lib/analytics";
 
 function MoSCoWBadge({ priority }: { priority?: string | null }) {
   const map: Record<string, string> = {
@@ -58,6 +59,12 @@ export default function ProjectFeaturesPage() {
       { id: projectId, featureId, data: { reach } },
       {
         onSuccess: () => {
+          const feature = features?.find(item => item.id === featureId);
+          trackEvent("feature_reach_updated", {
+            phase: feature?.phase ?? "unspecified",
+            priority: feature?.moscowPriority ?? "unspecified",
+            reach,
+          });
           void qc.invalidateQueries({ queryKey: getListFeaturesQueryKey(projectId) });
           setEditingId(null);
           toast({ title: "Feature updated" });

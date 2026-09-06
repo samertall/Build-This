@@ -15,6 +15,7 @@ import { DashboardLayout } from "@/layouts/dashboard-layout";
 import { useListProjectSources, useAddProjectSource, useDeleteProjectSource, getListProjectSourcesQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { trackEvent } from "@/lib/analytics";
 
 const sourceTypes = ["research_note", "interview", "analytics", "competitor", "heuristic", "user_feedback", "seo_audit", "stakeholder_input", "url", "other"];
 const classifications = ["user_research", "business_context", "technical_constraint", "competitive_analysis", "design_reference", "content_audit", "analytics_data", "stakeholder_requirement"];
@@ -45,6 +46,12 @@ export default function ProjectSourcesPage() {
       { id: projectId, data: { type: form.type, name: form.name, content: form.content || undefined, url: form.url || undefined, classification: form.classification || undefined } },
       {
         onSuccess: () => {
+          trackEvent("source_added", {
+            source_type: form.type,
+            classification: form.classification,
+            has_url: Boolean(form.url),
+            has_content: Boolean(form.content),
+          });
           void qc.invalidateQueries({ queryKey: getListProjectSourcesQueryKey(projectId) });
           setForm({ type: "research_note", name: "", content: "", url: "", classification: "user_research" });
           setOpen(false);

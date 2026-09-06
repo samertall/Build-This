@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ApprovalActions } from "@/components/approval-actions";
 import { ReviewThread } from "@/components/review-thread";
+import { trackEvent } from "@/lib/analytics";
 
 function ConfidenceBadge({ level }: { level?: string | null }) {
   const map: Record<string, string> = {
@@ -43,6 +44,7 @@ export default function ProjectInsightsPage() {
       { id: projectId, insightId, data: { status, comment } },
       {
         onSuccess: () => {
+          trackEvent("insight_reviewed", { decision: status });
           void qc.invalidateQueries({ queryKey: getListInsightsQueryKey(projectId) });
           void qc.invalidateQueries({ queryKey: getListApprovalHistoryQueryKey(projectId, "insight", insightId) });
           toast({ title: status === "approved" ? "Insight approved" : "Insight rejected" });

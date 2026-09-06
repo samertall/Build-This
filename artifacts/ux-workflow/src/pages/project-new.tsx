@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DashboardLayout } from "@/layouts/dashboard-layout";
 import { useCreateProject } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
+import { trackEvent } from "@/lib/analytics";
 
 const steps = ["Basics", "Objectives", "Audience", "Context", "Review"];
 
@@ -54,6 +55,11 @@ export default function NewProjectPage() {
       { data: { name: form.name, description: combinedDescription || undefined, productType: form.productType || undefined, industry: form.industry || undefined, stage: form.stage || undefined, businessGoals: form.businessGoals || undefined, targetUsers: form.targetUsers || undefined } },
       {
         onSuccess: (project: { id: number }) => {
+          trackEvent("project_created", {
+            product_type: form.productType || "unspecified",
+            industry: form.industry || "unspecified",
+            stage: form.stage || "unspecified",
+          });
           toast({ title: "Project created", description: "Your project is ready. Start by adding sources." });
           setLocation(`/projects/${project.id}`);
         },

@@ -10,6 +10,7 @@ import { DashboardLayout } from "@/layouts/dashboard-layout";
 import { PageHeader, EmptyState } from "@/components/page-header";
 import { useListTasks, useUpdateTask, getListTasksQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { trackEvent } from "@/lib/analytics";
 
 const columns = [
   { id: "todo",        label: "To Do",       accent: "bg-muted-foreground/30", dot: "bg-muted-foreground/50",  glow: "" },
@@ -48,9 +49,20 @@ export default function ProjectTasksPage() {
   const categories = tasks ? [...new Set(tasks.map(t => t.category ?? "design"))] : [];
 
   const moveTask = (taskId: number, newStatus: string) => {
+    const task = tasks?.find(item => item.id === taskId);
     updateTask.mutate(
       { id: projectId, taskId, data: { status: newStatus } },
-      { onSuccess: () => void qc.invalidateQueries({ queryKey: getListTasksQueryKey(projectId) }) }
+      {
+        onSuccess: () => {
+          trackEvent("task_status_changed", {
+            from_status: task?.status ?? "unspecified",
+            to_status: newStatus,
+            category: task?.category ?? "unspecified",
+            priority: task?.priority ?? "unspecified",
+          });
+          void qc.invalidateQueries({ queryKey: getListTasksQueryKey(projectId) });
+        },
+      }
     );
   };
 
