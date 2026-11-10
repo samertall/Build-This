@@ -1,5 +1,5 @@
 import express, { type Express } from "express";
-import pinoHttp from "pino-http";
+import { pinoHttp } from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
 import {
