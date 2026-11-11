@@ -41,6 +41,7 @@ export default function ProjectAnalyzePage() {
   };
 
   const handleRun = () => {
+    setResult(null);
     runAnalysis.mutate(
       { id: projectId, data: { agentTypes: Array.from(selected) } },
       {
@@ -58,7 +59,17 @@ export default function ProjectAnalyzePage() {
           void qc.invalidateQueries({ queryKey: getGetProjectQueryKey(projectId) });
           toast({ title: "Analysis complete", description: data?.message ?? "Agents finished running." });
         },
-        onError: () => toast({ title: "Analysis failed", description: "An error occurred during analysis. Please try again.", variant: "destructive" }),
+        onError: (error: unknown) => {
+          trackEvent("analysis_failed", { agent_count: selected.size });
+          const apiData = error && typeof error === "object" && "data" in error
+            ? (error as { data?: { error?: string } }).data
+            : undefined;
+          toast({
+            title: "Analysis failed",
+            description: apiData?.error ?? "AI analysis could not finish. No demonstration results were substituted. Please retry.",
+            variant: "destructive",
+          });
+        },
       }
     );
   };

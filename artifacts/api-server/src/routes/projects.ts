@@ -14,7 +14,7 @@ import {
   projectCommentsTable,
   approvalEventsTable,
 } from "@workspace/db";
-import { eq, count, and, inArray, or, desc } from "drizzle-orm";
+import { eq, count, and, inArray, or, desc, ne, lt, isNull } from "drizzle-orm";
 import {
   CreateProjectBody,
   UpdateProjectBody,
@@ -39,6 +39,8 @@ const router = Router();
 const editableRoles = requireProjectRole("owner", "editor");
 const ownerOnly = requireProjectRole("owner");
 const reviewItemTypes = new Set(["insight", "problem", "recommendation", "presentation"]);
+const allowedAnalysisAgents = new Set(["all", "research", "problems", "strategy", "journeys", "features", "tasks"]);
+const maxAnalysisContextCharacters = 50_000;
 
 function validReviewItemType(value: string): boolean {
   return reviewItemTypes.has(value);
@@ -78,7 +80,9 @@ router.get("/dashboard/summary", async (req, res) => {
       totalTasks: Number(tTasks.count),
       pendingApprovals: Number(pendingI.count) + Number(pendingP.count) + Number(pendingR.count),
       totalPresentations: Number(tPres.count),
-      estimatedTimeSavedHours: Number(tTasks.count) * 0.5,
+      // Hours saved are not measurable from task counts alone. Keep the legacy
+      // numeric API field neutral until actual before/after metrics exist.
+      estimatedTimeSavedHours: 0,
       recentProjects,
     });
   } catch (err) {
@@ -217,7 +221,7 @@ router.get("/projects/:id/stats", async (req, res) => {
       taskCount: Number(tCount.count),
       presentationCount: Number(presCount.count),
       sourceCount: Number(srcCount.count),
-      estimatedTimeSaved: Number(tCount.count) * 0.5,
+      estimatedTimeSaved: 0,
     });
   } catch (err) {
     req.log.error({ err }, "Failed to get project stats");
@@ -275,9 +279,39 @@ router.post("/projects/:id/analyze", editableRoles, async (req, res) => {
     const id = routeId(req.params.id);
     const parsed = RunAnalysisBody.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
+    if (parsed.data.agentTypes.length > 6 || parsed.data.agentTypes.some((agent) => !allowedAnalysisAgents.has(agent))) {
+      res.status(400).json({ error: "Select up to six supported analysis stages" });
+      return;
+    }
     const project = req.project!;
     const sources = await db.select().from(projectSourcesTable).where(eq(projectSourcesTable.projectId, id));
-    await db.update(projectsTable).set({ analysisStatus: "running", updatedAt: new Date() }).where(eq(projectsTable.id, id));
+    const contextCharacters = [
+      project.name, project.description, project.productType, project.industry,
+      project.businessGoals, project.targetUsers,
+      ...sources.flatMap((source) => [source.name, source.content, source.url]),
+    ].reduce<number>((total, value) => total + (value?.length ?? 0), 0);
+    if (contextCharacters > maxAnalysisContextCharacters) {
+      res.status(413).json({ error: "Project context is too large. Reduce source content before running AI analysis." });
+      return;
+    }
+    // Atomic claim prevents two requests from paying for the same analysis concurrently.
+    // A crashed function's stale claim can be retried after five minutes.
+    const now = new Date();
+    const [claimed] = await db.update(projectsTable)
+      .set({ analysisStatus: "running", updatedAt: now })
+      .where(and(
+        eq(projectsTable.id, id),
+        or(
+          isNull(projectsTable.analysisStatus),
+          ne(projectsTable.analysisStatus, "running"),
+          lt(projectsTable.updatedAt, new Date(now.getTime() - 5 * 60_000)),
+        ),
+      ))
+      .returning({ id: projectsTable.id });
+    if (!claimed) {
+      res.status(409).json({ error: "Analysis is already in progress for this project" });
+      return;
+    }
     const result = await runFullAnalysis(project, sources, parsed.data.agentTypes);
     await db.update(projectsTable).set({ analysisStatus: "complete", updatedAt: new Date() }).where(eq(projectsTable.id, id));
     res.json(result);

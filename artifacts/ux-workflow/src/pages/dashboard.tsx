@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { motion, useMotionValue, animate, useTransform, useReducedMotion } from "framer-motion";
 import { useEffect, useState, useMemo } from "react";
-import { Plus, FolderOpen, Brain, CheckCircle, ListChecks, Presentation, Clock, ArrowRight, Search, Filter, X } from "lucide-react";
+import { Plus, FolderOpen, Brain, CheckCircle, ListChecks, Presentation, ArrowRight, Search, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -64,7 +64,7 @@ export default function DashboardPage() {
     { label: "Approvals", value: summary?.pendingApprovals ?? 0, icon: CheckCircle, color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20", glow: "rgba(245,158,11,0.12)" },
     { label: "Tasks", value: summary?.totalTasks ?? 0, icon: ListChecks, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20", glow: "rgba(16,185,129,0.12)" },
     { label: "Decks", value: summary?.totalPresentations ?? 0, icon: Presentation, color: "text-sky-500", bg: "bg-sky-500/10", border: "border-sky-500/20", glow: "rgba(14,165,233,0.12)" },
-    { label: "Hrs Saved", value: summary?.estimatedTimeSavedHours ?? 0, icon: Clock, color: "text-rose-500", bg: "bg-rose-500/10", border: "border-rose-500/20", glow: "rgba(244,63,94,0.12)" },
+    { label: "Active Projects", value: summary?.activeProjects ?? 0, icon: FolderOpen, color: "text-rose-500", bg: "bg-rose-500/10", border: "border-rose-500/20", glow: "rgba(244,63,94,0.12)" },
   ];
 
   return (
@@ -183,7 +183,7 @@ export default function DashboardPage() {
                   </motion.div>
                   <h3 className="text-foreground font-black text-2xl mb-2 tracking-tight">No projects yet</h3>
                   <p className="text-muted-foreground text-sm mb-8 max-w-sm font-semibold leading-relaxed">
-                    Create your first project and let 12 AI agents transform your UX inputs into structured product outputs.
+                    Create your first project and use six focused AI analysis stages to turn UX inputs into structured product outputs.
                   </p>
                   <Link href="/projects/new">
                     <motion.div whileHover={{ scale: 1.04, y: -1 }} whileTap={{ scale: 0.97 }}>
