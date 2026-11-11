@@ -4,7 +4,12 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "workspace": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "node": "./dist/index.js",
+      "default": "./src/index.ts"
+    }
   },
   "dependencies": {
     "zod": "catalog:"
