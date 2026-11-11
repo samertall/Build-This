@@ -4,7 +4,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://api-server-git-fix-api-server-pino-h-c5a024-samertalls-projects.vercel.app/api/:path*"
+      "destination": "https://api-server-samertalls-projects.vercel.app/api/:path*"
     },
     {
       "source": "/(.*)",
