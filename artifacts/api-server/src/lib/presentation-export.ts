@@ -1,5 +1,4 @@
 import PDFDocument from "pdfkit";
-import type PptxGenJS from "pptxgenjs";
 import * as PptxGenJSModule from "pptxgenjs";
 
 type Primitive = string | number | boolean | null | undefined;
@@ -130,7 +129,9 @@ export function exportFileName(presentation: ExportPresentation, extension: "ppt
 }
 
 export async function createPptx(presentation: ExportPresentation): Promise<Buffer> {
-  const PptxConstructor = PptxGenJSModule.default as unknown as new () => PptxGenJS;
+  // Vercel's TypeScript adapter sees this constructor as a module namespace.
+  // Keep the interop cast here; exercise the real writer in a smoke test.
+  const PptxConstructor = PptxGenJSModule.default as unknown as new () => any;
   const pptx = new PptxConstructor();
   const slides = slidesFrom(presentation);
   pptx.layout = "LAYOUT_WIDE";
