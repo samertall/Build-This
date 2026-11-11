@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import proxy from "../artifacts/ux-workflow/proxy";
+import proxy from "../artifacts/ux-workflow/middleware.js";
 
 afterEach(() => vi.unstubAllEnvs());
 

@@ -1,10 +1,14 @@
 import { next, rewrite } from "@vercel/functions";
 
+export const config = {
+  matcher: ["/api/:path*"],
+};
+
 const PREVIEW_ENDPOINT_ERROR = JSON.stringify({
   error: "Preview API is not configured for an isolated staging deployment",
 });
 
-function previewUnavailable(): Response {
+function previewUnavailable() {
   return new Response(PREVIEW_ENDPOINT_ERROR, {
     status: 503,
     headers: {
@@ -22,17 +26,15 @@ function previewUnavailable(): Response {
  * to the explicitly configured Preview API branch. Missing or unsafe config
  * fails closed instead of falling through to the production rewrite.
  */
-export default function proxy(request: Request): Response {
+export default function middleware(request) {
   if (process.env.VERCEL_ENV === "production") return next();
 
-  // This proxy runs only on deployed /api paths; do not let Preview requests
-  // reach the production rewrite if deployment environment metadata is absent.
   if (process.env.VERCEL_ENV !== "preview") return previewUnavailable();
 
   const rawOrigin = process.env.PREVIEW_API_ORIGIN;
   if (!rawOrigin) return previewUnavailable();
 
-  let origin: URL;
+  let origin;
   try {
     origin = new URL(rawOrigin);
   } catch {

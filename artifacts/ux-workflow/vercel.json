@@ -36,9 +36,5 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "proxy": {
-    "entrypoint": "proxy.ts",
-    "matcher": ["/api/:path*"]
-  }
+  ]
 }
