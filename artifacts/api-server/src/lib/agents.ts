@@ -8,6 +8,7 @@ import {
   featuresTable,
   tasksTable,
 } from "@workspace/db";
+import { handleAgentFailure, parseAgentItems, testMockFallbackEnabled } from "./ai-guard.js";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -162,10 +163,9 @@ Generate 5-8 specific, actionable insights. Each insight must cite evidence or b
 Focus on: pain points, user needs, content gaps, constraints, and opportunities.`,
       `Analyze this project and generate research insights:\n\n${context}`
     );
-    const parsed = JSON.parse(raw);
-    insights = parsed.insights ?? [];
+    insights = parseAgentItems<typeof insights[number]>(raw, "insights");
   } catch (err) {
-    insights = getMockInsights(project);
+    insights = handleAgentFailure(err, () => getMockInsights(project));
   }
 
   if (insights.length > 0) {
@@ -196,10 +196,9 @@ Return JSON: { "problems": [{ "statement": string, "howMightWe": string, "rootCa
 Generate 4-6 problem statements. Each must be specific and measurable. Avoid vague statements like "improve UX".`,
       `Generate problem statements for this project:\n\n${context}`
     );
-    const parsed = JSON.parse(raw);
-    problems = parsed.problems ?? [];
+    problems = parseAgentItems<typeof problems[number]>(raw, "problems");
   } catch (err) {
-    problems = getMockProblems(project);
+    problems = handleAgentFailure(err, () => getMockProblems(project));
   }
 
   if (problems.length > 0) {
@@ -231,10 +230,9 @@ Generate 5-7 recommendations. Categories: usability, accessibility, conversion, 
 Each recommendation must be specific and actionable — never say "improve UX" or "make it intuitive".`,
       `Generate UX recommendations for this project:\n\n${context}`
     );
-    const parsed = JSON.parse(raw);
-    recs = parsed.recommendations ?? [];
+    recs = parseAgentItems<typeof recs[number]>(raw, "recommendations");
   } catch (err) {
-    recs = getMockRecommendations(project);
+    recs = handleAgentFailure(err, () => getMockRecommendations(project));
   }
 
   if (recs.length > 0) {
@@ -270,10 +268,9 @@ Return JSON: { "journeys": [{ "title": string, "persona": string, "scenario": st
 Generate 2 journeys: one current-state (showing pain points) and one future-state (showing the improved experience).`,
       `Generate user journey maps for this project:\n\n${context}`
     );
-    const parsed = JSON.parse(raw);
-    journeys = parsed.journeys ?? [];
+    journeys = parseAgentItems<typeof journeys[number]>(raw, "journeys");
   } catch (err) {
-    journeys = getMockJourneys(project);
+    journeys = handleAgentFailure(err, () => getMockJourneys(project));
   }
 
   if (journeys.length > 0) {
@@ -304,10 +301,9 @@ Generate 6-10 features. Calculate RICE = (reach * impact * confidence/100) / eff
 Prioritize MVP features that deliver the most user and business value quickly.`,
       `Generate prioritized features for this project:\n\n${context}`
     );
-    const parsed = JSON.parse(raw);
-    features = parsed.features ?? [];
+    features = parseAgentItems<typeof features[number]>(raw, "features");
   } catch (err) {
-    features = getMockFeatures(project);
+    features = handleAgentFailure(err, () => getMockFeatures(project));
   }
 
   if (features.length > 0) {
@@ -350,10 +346,9 @@ Generate 8-12 tasks covering design, development, content, and QA. Each task mus
 Avoid vague tasks — be specific about what needs to be done and how success is measured.`,
       `Generate team tasks for this project:\n\n${context}`
     );
-    const parsed = JSON.parse(raw);
-    tasks = parsed.tasks ?? [];
+    tasks = parseAgentItems<typeof tasks[number]>(raw, "tasks");
   } catch (err) {
-    tasks = getMockTasks(project);
+    tasks = handleAgentFailure(err, () => getMockTasks(project));
   }
 
   if (tasks.length > 0) {
@@ -396,7 +391,10 @@ export async function runFullAnalysis(
   let recommendationsGenerated = 0;
   let featuresGenerated = 0;
   let tasksGenerated = 0;
-  const usingFallback = !process.env.OPENAI_API_KEY;
+  if (!process.env.OPENAI_API_KEY && !testMockFallbackEnabled()) {
+    throw new Error("OPENAI_API_KEY is not configured");
+  }
+  const usingFallback = testMockFallbackEnabled();
 
   const runAll = agentTypes.includes("all") || agentTypes.length === 0;
 
@@ -430,7 +428,7 @@ export async function runFullAnalysis(
     agentsRun.push("tasks");
   }
 
-  const suffix = usingFallback ? " (AI fallback mode — add OPENAI_API_KEY for live AI generation)" : "";
+  const suffix = usingFallback ? " (test-only sample data enabled)" : "";
 
   return {
     status: "complete",

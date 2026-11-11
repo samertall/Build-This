@@ -1,7 +1,7 @@
 import { Link } from "wouter";
-import { motion, useScroll, useTransform, useMotionValue, useSpring, useReducedMotion, animate, type Variants } from "framer-motion";
+import { motion, useScroll, useTransform, useMotionValue, useSpring, useReducedMotion, type Variants } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Brain, Target, Layers, Zap, Users, BarChart3, Presentation, CheckCircle, Cpu, FlaskConical, Route, Star, GitBranch, ListChecks, Search, Lightbulb, Workflow, Clock } from "lucide-react";
+import { ArrowRight, Brain, Target, BarChart3, CheckCircle, Cpu, FlaskConical, Route, Star, ListChecks, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -21,18 +21,12 @@ const fadeUp: Variants = {
 };
 
 const agents = [
-  { name: "Project Context", icon: Layers, desc: "Structures inputs into a coherent project framework.", color: "text-blue-500 bg-blue-500/10 border-blue-500/20" },
   { name: "Research Synthesis", icon: FlaskConical, desc: "Clusters insights from disparate research sources.", color: "text-violet-500 bg-violet-500/10 border-violet-500/20" },
   { name: "Problem Framing", icon: Target, desc: "Converts findings into clear problem statements.", color: "text-rose-500 bg-rose-500/10 border-rose-500/20" },
   { name: "UX Strategy", icon: Lightbulb, desc: "Generates evidence-linked strategic recommendations.", color: "text-amber-500 bg-amber-500/10 border-amber-500/20" },
   { name: "Journey & Flow", icon: Route, desc: "Maps current and future state user journeys.", color: "text-indigo-500 bg-indigo-500/10 border-indigo-500/20" },
   { name: "Feature Prioritization", icon: Star, desc: "RICE-scored backlog with MoSCoW priorities.", color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
-  { name: "Information Arch.", icon: GitBranch, desc: "Structures content hierarchy and navigation.", color: "text-teal-500 bg-teal-500/10 border-teal-500/20" },
-  { name: "Wireframe Direction", icon: Workflow, desc: "Generates layout rationale and component specs.", color: "text-cyan-500 bg-cyan-500/10 border-cyan-500/20" },
-  { name: "Content & SEO", icon: Search, desc: "Identifies content gaps and SEO opportunities.", color: "text-sky-500 bg-sky-500/10 border-sky-500/20" },
   { name: "Task Orchestration", icon: ListChecks, desc: "Generates team-ready tasks with acceptance criteria.", color: "text-blue-600 bg-blue-600/10 border-blue-600/20" },
-  { name: "Presentation", icon: Presentation, desc: "Auto-generates stakeholder-ready slide decks.", color: "text-purple-500 bg-purple-500/10 border-purple-500/20" },
-  { name: "Quality Assurance", icon: CheckCircle, desc: "Validates outputs against UX heuristics.", color: "text-green-500 bg-green-500/10 border-green-500/20" },
 ];
 
 const roles = [
@@ -44,40 +38,36 @@ const roles = [
 
 const steps = [
   { number: "01", label: "Upload Context", desc: "Research notes, goals, analytics, and references." },
-  { number: "02", label: "AI Synthesis", desc: "12 specialized agents analyze gaps and opportunities." },
+  { number: "02", label: "AI Synthesis", desc: "Six analysis stages explore gaps and opportunities." },
   { number: "03", label: "Review & Approve", desc: "Human-in-the-loop sign-off for every insight." },
   { number: "04", label: "Execute", desc: "Tasks and slide decks land in your workflow." },
 ];
 
-const stats = [
-  { value: 60, suffix: "%", label: "Synthesis Time Saved" },
-  { value: 12, suffix: "x", label: "Parallel AI Agents" },
-  { value: 80, suffix: "%", label: "Fewer Ambiguous Tasks" },
-  { value: 3, suffix: "x", label: "Faster Sign-off" },
+const capabilities = [
+  { value: "6", label: "Analysis stages" },
+  { value: "4", label: "Workflow steps" },
+  { value: "2", label: "Deck export formats" },
+  { value: "You", label: "Final approval" },
 ];
 
 function LogoFull({ height = 36 }: { height?: number }) {
   return <img src="/build-this-logo.png" alt="Build-This" style={{ height: `${height}px`, width: "auto" }} />;
 }
 
-function StatCounter({ value, suffix, label }: { value: number; suffix: string; label: string }) {
-  const count = useMotionValue(0);
-  const rounded = useTransform(count, Math.round);
+function CapabilityStat({ value, label }: { value: string; label: string }) {
   return (
     <motion.div
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-80px" }}
       variants={fadeUp}
-      onViewportEnter={() => animate(count, value, { duration: 2, ease: "easeOut" })}
       className="text-center group cursor-default"
     >
       <motion.div
         whileHover={{ scale: 1.05 }}
         className="text-5xl md:text-6xl font-black text-primary mb-3 tracking-tighter flex items-center justify-center number-glow"
       >
-        <motion.span>{rounded}</motion.span>
-        <span>{suffix}</span>
+        {value}
       </motion.div>
       <div className="text-xs md:text-sm text-muted-foreground font-black uppercase tracking-widest">{label}</div>
     </motion.div>
@@ -308,11 +298,11 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* ── Stats ── */}
+      {/* ── Verified product capabilities, not unsubstantiated outcomes ── */}
       <section className="py-24 px-6 border-y border-border/40 bg-card/60 relative z-20 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-6">
-          {stats.map((s) => (
-            <StatCounter key={s.label} value={s.value} suffix={s.suffix} label={s.label} />
+          {capabilities.map((capability) => (
+            <CapabilityStat key={capability.label} {...capability} />
           ))}
         </div>
       </section>
@@ -353,19 +343,19 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── 12 Agents ── */}
+      {/* ── Six implemented analysis stages ── */}
       <section className="py-32 px-6 bg-card border-y border-border/40 relative overflow-hidden">
         <div className="absolute inset-0 dot-grid opacity-40 pointer-events-none" />
         <div className="max-w-7xl mx-auto relative z-10">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={fadeUp} className="text-center mb-20">
             <Badge variant="outline" className="mb-6 bg-primary/10 text-primary border-primary/20 text-[10px] uppercase tracking-widest font-mono font-black px-4 py-1.5 shadow-sm">
-              12 AI Agents
+              6 AI Analysis Stages
             </Badge>
             <h2 className="text-[clamp(2.4rem,5vw,4.5rem)] font-black text-foreground mb-6 tracking-tighter">Specialized intelligence</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto text-lg font-semibold">Each agent is purpose-built for a specific UX discipline. They work in sequence, feeding context forward.</p>
+            <p className="text-muted-foreground max-w-2xl mx-auto text-lg font-semibold">Each stage focuses on a UX discipline. Stages run in sequence to generate reviewable outputs.</p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {agents.map((agent, i) => (
               <motion.div
                 key={agent.name}
@@ -473,7 +463,7 @@ export default function LandingPage() {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-indigo-400">You decide.</span>
             </h2>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-16 leading-relaxed font-semibold">
-              Every insight, problem statement, and recommendation requires explicit approval before it becomes actionable.
+              Review and approve AI-generated insights, problem statements, and recommendations before sharing them with your team.
             </p>
           </motion.div>
         </div>

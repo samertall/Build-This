@@ -4,10 +4,10 @@ import { Brain, Layers, CheckCircle, Zap, ArrowRight } from "lucide-react";
 import { basePath } from "@/lib/routing";
 
 const features = [
-  { icon: Brain, label: "12 AI Agents", desc: "Running in parallel" },
+  { icon: Brain, label: "6 AI Stages", desc: "Focused UX analysis" },
   { icon: Layers, label: "Full Pipeline", desc: "End-to-end UX workflow" },
-  { icon: CheckCircle, label: "Human-in-Loop", desc: "You approve every output" },
-  { icon: Zap, label: "60% Faster", desc: "Synthesis to execution" },
+  { icon: CheckCircle, label: "Human Review", desc: "Approve key insights" },
+  { icon: Zap, label: "Deck Exports", desc: "PDF and PowerPoint" },
 ];
 
 export default function SignUpPage() {
@@ -52,7 +52,7 @@ export default function SignUpPage() {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-300 to-indigo-400 animate-gradient">starts here.</span>
             </h2>
             <p className="text-white/60 text-base font-semibold leading-relaxed max-w-sm">
-              Create a project, upload your research, and let 12 AI agents build your entire UX pipeline — in minutes.
+              Create a project, add your research, and use six focused AI stages to develop reviewable UX outputs.
             </p>
           </motion.div>
 
