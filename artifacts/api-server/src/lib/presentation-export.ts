@@ -1,5 +1,11 @@
+import { createRequire } from "node:module";
 import PDFDocument from "pdfkit";
-import * as PptxGenJSModule from "pptxgenjs";
+
+// PptxGenJS 4.0.1 advertises an ESM entrypoint with a .js extension but
+// doesn't mark its package as ESM. Native Node interprets that file as CJS
+// and crashes during function initialization. Use its supported require
+// export, which resolves to dist/pptxgen.cjs.js, only when exporting a PPTX.
+const requirePptx = createRequire(import.meta.url);
 
 type Primitive = string | number | boolean | null | undefined;
 type ContentValue = Primitive | ContentValue[] | { [key: string]: ContentValue };
@@ -129,9 +135,7 @@ export function exportFileName(presentation: ExportPresentation, extension: "ppt
 }
 
 export async function createPptx(presentation: ExportPresentation): Promise<Buffer> {
-  // Vercel's TypeScript adapter sees this constructor as a module namespace.
-  // Keep the interop cast here; exercise the real writer in a smoke test.
-  const PptxConstructor = PptxGenJSModule.default as unknown as new () => any;
+  const PptxConstructor = requirePptx("pptxgenjs") as new () => any;
   const pptx = new PptxConstructor();
   const slides = slidesFrom(presentation);
   pptx.layout = "LAYOUT_WIDE";
