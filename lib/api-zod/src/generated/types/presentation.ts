@@ -5,7 +5,7 @@
  * AI-Powered UX Workflow Automation API
  * OpenAPI spec version: 0.1.0
  */
-import type { PresentationSlides } from './presentationSlides';
+import type { PresentationSlides } from './presentationSlides.js';
 
 export interface Presentation {
   id: number;

@@ -31,9 +31,9 @@ import {
   UpdateProjectMemberBody,
   CreateProjectCommentBody,
 } from "@workspace/api-zod";
-import { runFullAnalysis } from "../lib/agents";
-import { requireProjectAccess, requireProjectRole } from "../middlewares/auth";
-import { createPdf, createPptx, exportFileName, isExportSlideArray } from "../lib/presentation-export";
+import { runFullAnalysis } from "../lib/agents.js";
+import { requireProjectAccess, requireProjectRole } from "../middlewares/auth.js";
+import { createPdf, createPptx, exportFileName, isExportSlideArray } from "../lib/presentation-export.js";
 
 const router = Router();
 const editableRoles = requireProjectRole("owner", "editor");

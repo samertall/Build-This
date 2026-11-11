@@ -1,5 +1,11 @@
+import { createRequire } from "node:module";
 import PDFDocument from "pdfkit";
-import PptxGenJS from "pptxgenjs";
+
+// PptxGenJS 4.0.1 advertises an ESM entrypoint with a .js extension but
+// doesn't mark its package as ESM. Native Node interprets that file as CJS
+// and crashes during function initialization. Use its supported require
+// export, which resolves to dist/pptxgen.cjs.js, only when exporting a PPTX.
+const requirePptx = createRequire(import.meta.url);
 
 type Primitive = string | number | boolean | null | undefined;
 type ContentValue = Primitive | ContentValue[] | { [key: string]: ContentValue };
@@ -129,7 +135,8 @@ export function exportFileName(presentation: ExportPresentation, extension: "ppt
 }
 
 export async function createPptx(presentation: ExportPresentation): Promise<Buffer> {
-  const pptx = new PptxGenJS();
+  const PptxConstructor = requirePptx("pptxgenjs") as new () => any;
+  const pptx = new PptxConstructor();
   const slides = slidesFrom(presentation);
   pptx.layout = "LAYOUT_WIDE";
   pptx.author = "Build-This";
@@ -280,7 +287,8 @@ function drawPdfText(doc: PDFKit.PDFDocument, text: string, x: number, y: number
 }
 
 export async function createPdf(presentation: ExportPresentation): Promise<Buffer> {
-  const doc = new PDFDocument({ size: [960, 540], margin: 0, autoFirstPage: false });
+  const PDFDocumentConstructor = PDFDocument as unknown as new (options?: PDFKit.PDFDocumentOptions) => PDFKit.PDFDocument;
+  const doc = new PDFDocumentConstructor({ size: [960, 540], margin: 0, autoFirstPage: false });
   const chunks: Buffer[] = [];
   const result = new Promise<Buffer>((resolve, reject) => {
     doc.on("data", (chunk: Buffer) => chunks.push(chunk));
