@@ -5,7 +5,7 @@
  * AI-Powered UX Workflow Automation API
  * OpenAPI spec version: 0.1.0
  */
-import type { UserJourneyStages } from './userJourneyStages';
+import type { UserJourneyStages } from './userJourneyStages.js';
 
 export interface UserJourney {
   id: number;

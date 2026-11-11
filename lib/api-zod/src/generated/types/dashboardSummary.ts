@@ -5,7 +5,7 @@
  * AI-Powered UX Workflow Automation API
  * OpenAPI spec version: 0.1.0
  */
-import type { Project } from './project';
+import type { Project } from './project.js';
 
 export interface DashboardSummary {
   totalProjects: number;
