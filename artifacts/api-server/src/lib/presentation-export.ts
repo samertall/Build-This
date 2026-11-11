@@ -1,4 +1,5 @@
 import PDFDocument from "pdfkit";
+import type PptxGenJS from "pptxgenjs";
 import * as PptxGenJSModule from "pptxgenjs";
 
 type Primitive = string | number | boolean | null | undefined;
@@ -129,7 +130,8 @@ export function exportFileName(presentation: ExportPresentation, extension: "ppt
 }
 
 export async function createPptx(presentation: ExportPresentation): Promise<Buffer> {
-  const pptx = new PptxGenJSModule.default();
+  const PptxConstructor = PptxGenJSModule.default as unknown as new () => PptxGenJS;
+  const pptx = new PptxConstructor();
   const slides = slidesFrom(presentation);
   pptx.layout = "LAYOUT_WIDE";
   pptx.author = "Build-This";
@@ -280,7 +282,8 @@ function drawPdfText(doc: PDFKit.PDFDocument, text: string, x: number, y: number
 }
 
 export async function createPdf(presentation: ExportPresentation): Promise<Buffer> {
-  const doc = new PDFDocument({ size: [960, 540], margin: 0, autoFirstPage: false });
+  const PDFDocumentConstructor = PDFDocument as unknown as new (options?: PDFKit.PDFDocumentOptions) => PDFKit.PDFDocument;
+  const doc = new PDFDocumentConstructor({ size: [960, 540], margin: 0, autoFirstPage: false });
   const chunks: Buffer[] = [];
   const result = new Promise<Buffer>((resolve, reject) => {
     doc.on("data", (chunk: Buffer) => chunks.push(chunk));
