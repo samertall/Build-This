@@ -64,8 +64,12 @@ export default function ProjectAnalyzePage() {
           const apiData = error && typeof error === "object" && "data" in error
             ? (error as { data?: { error?: string } }).data
             : undefined;
+          const status = error && typeof error === "object" && "status" in error
+            ? (error as { status?: number }).status
+            : undefined;
+          void qc.invalidateQueries({ queryKey: getGetProjectQueryKey(projectId) });
           toast({
-            title: "Analysis failed",
+            title: status === 429 ? "Daily analysis limit reached" : status === 503 ? "Preview unavailable" : "Analysis failed",
             description: apiData?.error ?? "AI analysis could not finish. No demonstration results were substituted. Please retry.",
             variant: "destructive",
           });

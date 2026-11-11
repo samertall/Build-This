@@ -472,6 +472,11 @@ export default function LandingPage() {
       {/* ── Footer ── */}
       <footer className="py-12 text-center text-muted-foreground border-t border-border/40 bg-background text-sm font-semibold">
         <p>© {new Date().getFullYear()} Build-This UX Pipeline. Agentic workflows for product teams.</p>
+        <nav aria-label="Legal and support" className="mt-5 flex flex-wrap justify-center gap-x-7 gap-y-3">
+          <Link href="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
+          <Link href="/terms" className="hover:text-primary transition-colors">Terms</Link>
+          <Link href="/support" className="hover:text-primary transition-colors">Support</Link>
+        </nav>
       </footer>
     </div>
   );

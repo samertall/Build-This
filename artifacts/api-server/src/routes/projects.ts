@@ -32,6 +32,8 @@ import {
   CreateProjectCommentBody,
 } from "@workspace/api-zod";
 import { runFullAnalysis } from "../lib/agents.js";
+import { AiQuotaExceededError, requestedStageCount, reserveAiStages } from "../lib/ai-quota.js";
+import { secondsUntilUtcMidnight } from "../lib/ai-quota-rules.js";
 import { requireProjectAccess, requireProjectRole } from "../middlewares/auth.js";
 import { createPdf, createPptx, exportFileName, isExportSlideArray } from "../lib/presentation-export.js";
 
@@ -311,6 +313,20 @@ router.post("/projects/:id/analyze", editableRoles, async (req, res) => {
     if (!claimed) {
       res.status(409).json({ error: "Analysis is already in progress for this project" });
       return;
+    }
+    try {
+      await reserveAiStages(req.userId!, requestedStageCount(parsed.data.agentTypes));
+    } catch (error) {
+      if (error instanceof AiQuotaExceededError) {
+        // Restore the previous state: hitting the allowance is not an AI error.
+        await db.update(projectsTable)
+          .set({ analysisStatus: project.analysisStatus === "running" ? "error" : (project.analysisStatus ?? "pending"), updatedAt: new Date() })
+          .where(and(eq(projectsTable.id, id), eq(projectsTable.analysisStatus, "running"), eq(projectsTable.updatedAt, now)));
+        res.setHeader("Retry-After", String(secondsUntilUtcMidnight()));
+        res.status(429).json({ error: error.message });
+        return;
+      }
+      throw error;
     }
     const result = await runFullAnalysis(project, sources, parsed.data.agentTypes);
     await db.update(projectsTable).set({ analysisStatus: "complete", updatedAt: new Date() }).where(eq(projectsTable.id, id));
