@@ -4,11 +4,13 @@ import { shadcn } from "@clerk/themes";
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { MotionConfig } from "framer-motion";
+import { Analytics, type BeforeSendEvent } from "@vercel/analytics/react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { basePath } from "@/lib/routing";
 import { PresentationOrderTestPage } from "@/pages/project-presentations";
+import { PrivacyPage, TermsPage, SupportPage } from "@/pages/legal";
 
 import LandingPage from "@/pages/landing";
 const SignInPage = lazy(() => import("@/pages/sign-in"));
@@ -31,6 +33,21 @@ const presentationOrderTestMode =
   import.meta.env.VITE_PRESENTATION_ORDER_TEST_MODE === "true";
 const teamReviewTestMode =
   import.meta.env.VITE_TEAM_REVIEW_TEST_MODE === "true";
+
+// Only measure public pages. Project paths and authentication URLs can contain
+// private IDs, tokens, or query strings that must not reach analytics.
+const publicAnalyticsPaths = new Set(["/", "/privacy", "/terms", "/support"]);
+function publicPageAnalyticsOnly(event: BeforeSendEvent): BeforeSendEvent | null {
+  try {
+    const url = new URL(event.url);
+    if (!publicAnalyticsPaths.has(url.pathname)) return null;
+    url.search = "";
+    url.hash = "";
+    return { ...event, url: url.toString() };
+  } catch {
+    return null;
+  }
+}
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -154,6 +171,9 @@ function ClerkProviderWithRoutes() {
                 <Route path="/" component={HomeRedirect} />
                 <Route path="/sign-in/*?" component={SignInPage} />
                 <Route path="/sign-up/*?" component={SignUpPage} />
+                <Route path="/privacy" component={PrivacyPage} />
+                <Route path="/terms" component={TermsPage} />
+                <Route path="/support" component={SupportPage} />
 
                 <Route path="/dashboard"><ProtectedRoute component={DashboardPage} /></Route>
                 <Route path="/projects/new"><ProtectedRoute component={NewProjectPage} /></Route>
@@ -194,6 +214,9 @@ function PresentationOrderTestRoutes() {
 function BrowserTestRoutes() {
   return (
     <Switch>
+      <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/support" component={SupportPage} />
       <Route
         path="/projects/:id/presentations"
         component={PresentationOrderTestPage}
@@ -237,6 +260,9 @@ function App() {
         <BrowserTestModeWithRoutes />
       ) : (
         <ClerkProviderWithRoutes />
+      )}
+      {!presentationOrderTestMode && !teamReviewTestMode && (
+        <Analytics beforeSend={publicPageAnalyticsOnly} />
       )}
     </WouterRouter>
   );

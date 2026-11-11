@@ -9,6 +9,7 @@ import {
 } from "./middlewares/clerkProxyMiddleware.js";
 import router from "./routes/index.js";
 import { logger } from "./lib/logger.js";
+import { previewDatabaseGuard } from "./middlewares/preview-database-guard.js";
 
 const app: Express = express();
 
@@ -36,6 +37,7 @@ app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/api", previewDatabaseGuard);
 
 if (process.env.TEAM_REVIEW_TEST_MODE !== "true") {
   app.use(

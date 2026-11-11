@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /projects/
+Disallow: /sign-in
+Disallow: /sign-up
 
 Sitemap: https://app.samertall.com/sitemap.xml

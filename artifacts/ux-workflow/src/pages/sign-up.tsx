@@ -2,6 +2,7 @@ import { SignUp } from "@clerk/react";
 import { motion } from "framer-motion";
 import { Brain, Layers, CheckCircle, Zap, ArrowRight } from "lucide-react";
 import { basePath } from "@/lib/routing";
+import { Link } from "wouter";
 
 const features = [
   { icon: Brain, label: "6 AI Stages", desc: "Focused UX analysis" },
@@ -111,6 +112,11 @@ export default function SignUpPage() {
             <div className="absolute -inset-2 bg-gradient-to-b from-primary/10 to-transparent rounded-3xl blur-xl -z-10" />
             <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
           </div>
+          <nav aria-label="Legal and support" className="mt-6 flex justify-center gap-5 text-xs font-semibold text-muted-foreground">
+            <Link href="/privacy" className="hover:text-primary">Privacy</Link>
+            <Link href="/terms" className="hover:text-primary">Terms</Link>
+            <Link href="/support" className="hover:text-primary">Support</Link>
+          </nav>
         </motion.div>
       </div>
     </div>
