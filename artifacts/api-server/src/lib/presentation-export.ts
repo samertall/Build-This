@@ -1,5 +1,5 @@
 import PDFDocument from "pdfkit";
-import PptxGenJS from "pptxgenjs";
+import * as PptxGenJSModule from "pptxgenjs";
 
 type Primitive = string | number | boolean | null | undefined;
 type ContentValue = Primitive | ContentValue[] | { [key: string]: ContentValue };
@@ -129,7 +129,7 @@ export function exportFileName(presentation: ExportPresentation, extension: "ppt
 }
 
 export async function createPptx(presentation: ExportPresentation): Promise<Buffer> {
-  const pptx = new PptxGenJS();
+  const pptx = new PptxGenJSModule.default();
   const slides = slidesFrom(presentation);
   pptx.layout = "LAYOUT_WIDE";
   pptx.author = "Build-This";
