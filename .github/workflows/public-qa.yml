@@ -27,7 +27,7 @@ jobs:
       - name: Typecheck workspace
         run: pnpm run typecheck
       - name: Run safe AI, authentication, and routing unit tests
-        run: pnpm exec vitest run --config vitest.config.ts tests/ai-guard.integration.test.ts tests/ai-provider-error.integration.test.ts tests/ai-quota.integration.test.ts tests/preview-api-routing.integration.test.ts tests/api-session-token.integration.test.ts
+        run: pnpm exec vitest run --config vitest.config.ts tests/ai-guard.integration.test.ts tests/ai-provider-error.integration.test.ts tests/ai-provider-gemini.integration.test.ts tests/ai-quota.integration.test.ts tests/preview-api-routing.integration.test.ts tests/api-session-token.integration.test.ts
       - name: Install Chromium browser
         run: pnpm exec playwright install --with-deps chromium
       - name: Test public pages and responsive layouts

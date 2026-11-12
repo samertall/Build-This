@@ -1,4 +1,4 @@
-import { OpenAI } from "openai";
+import { requestAiJson, resolveAiProviderSettings } from "./ai-provider.js";
 import { db } from "@workspace/db";
 import {
   researchInsightsTable,
@@ -9,10 +9,6 @@ import {
   tasksTable,
 } from "@workspace/db";
 import { handleAgentFailure, parseAgentItems, testMockFallbackEnabled } from "./ai-guard.js";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 type Project = {
   id: number;
@@ -33,20 +29,7 @@ type Source = {
 };
 
 async function callAgent(systemPrompt: string, userPrompt: string): Promise<string> {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY is not configured");
-  }
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-    response_format: { type: "json_object" },
-    max_tokens: 4000,
-    temperature: 0.4,
-  });
-  return response.choices[0]?.message?.content ?? "{}";
+  return requestAiJson(systemPrompt, userPrompt);
 }
 
 function buildProjectContext(project: Project, sources: Source[]): string {
@@ -391,8 +374,8 @@ export async function runFullAnalysis(
   let recommendationsGenerated = 0;
   let featuresGenerated = 0;
   let tasksGenerated = 0;
-  if (!process.env.OPENAI_API_KEY && !testMockFallbackEnabled()) {
-    throw new Error("OPENAI_API_KEY is not configured");
+  if (!testMockFallbackEnabled()) {
+    resolveAiProviderSettings();
   }
   const usingFallback = testMockFallbackEnabled();
 

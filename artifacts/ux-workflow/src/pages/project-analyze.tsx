@@ -31,6 +31,7 @@ export default function ProjectAnalyzePage() {
 
   const [selected, setSelected] = useState<Set<string>>(new Set(["research", "problems", "strategy", "journeys", "features", "tasks"]));
   const [billingRequired, setBillingRequired] = useState(false);
+  const [providerSetupRequired, setProviderSetupRequired] = useState(false);
   const [result, setResult] = useState<{ agentsRun: string[]; insightsGenerated: number; problemsGenerated: number; recommendationsGenerated: number; featuresGenerated: number; tasksGenerated: number; message: string } | null>(null);
 
   const toggle = (id: string) => {
@@ -44,11 +45,13 @@ export default function ProjectAnalyzePage() {
   const handleRun = () => {
     setResult(null);
     setBillingRequired(false);
+    setProviderSetupRequired(false);
     runAnalysis.mutate(
       { id: projectId, data: { agentTypes: Array.from(selected) } },
       {
         onSuccess: (data: typeof result) => {
           setBillingRequired(false);
+          setProviderSetupRequired(false);
           trackEvent("analysis_completed", {
             agent_count: selected.size,
             all_agents: selected.size === agents.length,
@@ -72,9 +75,10 @@ export default function ProjectAnalyzePage() {
             : undefined;
           const creditsExhausted = apiData?.code === "ai_credits_exhausted";
           setBillingRequired(creditsExhausted);
+          setProviderSetupRequired(apiData?.code === "ai_provider_not_configured");
           void qc.invalidateQueries({ queryKey: getGetProjectQueryKey(projectId) });
           toast({
-            title: creditsExhausted ? "OpenAI API credits exhausted" : status === 429 ? "Daily analysis limit reached" : status === 503 ? "AI service unavailable" : "Analysis failed",
+            title: creditsExhausted ? "OpenAI API credits exhausted" : apiData?.code === "ai_provider_not_configured" ? "Gemini API setup required" : status === 429 ? "Daily analysis limit reached" : status === 503 ? "AI service unavailable" : "Analysis failed",
             description: apiData?.error ?? "AI analysis could not finish. No demonstration results were substituted. Please retry.",
             variant: "destructive",
           });
@@ -171,6 +175,12 @@ export default function ProjectAnalyzePage() {
             )}
           </Button>
 
+          {providerSetupRequired && (
+            <p role="alert" className="text-sm text-destructive mt-4 font-semibold">
+              Gemini is selected but its API key needs to be configured in the backend. Create a free-tier key at{" "}
+              <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">Google AI Studio</a>, then add GEMINI_API_KEY to Vercel api-server Production settings. Do not paste keys into this site or GitHub.
+            </p>
+          )}
           {billingRequired && (
             <p role="alert" className="text-sm text-destructive mt-4 font-semibold">
               OpenAI API credits are exhausted. The application owner can restore service in{" "}

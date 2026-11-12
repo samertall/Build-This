@@ -29,6 +29,8 @@ beforeAll(() => {
     throw new Error("Provider-billing test must use disposable localhost PostgreSQL");
   }
   vi.stubEnv("ALLOW_AI_MOCK_FALLBACK", "false");
+  vi.stubEnv("AI_PROVIDER", "gemini");
+  vi.stubEnv("GEMINI_API_KEY", "");
   vi.stubEnv("OPENAI_API_KEY", "");
   vi.stubEnv("AI_DAILY_USER_STAGE_LIMIT", "24");
   vi.stubEnv("AI_DAILY_GLOBAL_STAGE_LIMIT", "150");
@@ -69,7 +71,7 @@ describe("provider outage quota release (no provider calls, real local database)
       expect(result.status, JSON.stringify(result.body)).toBe(503);
       expect(result.body).toEqual({
         code: "ai_provider_not_configured",
-        error: expect.stringContaining("The AI provider cannot be authenticated"),
+        error: expect.stringContaining("Gemini API is not configured"),
       });
       expect(await globalUsage()).toBe(initial);
     }
