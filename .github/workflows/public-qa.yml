@@ -75,6 +75,8 @@ jobs:
           node-version: '24'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Build workspace libraries for integration imports
+        run: pnpm run typecheck:libs
       - name: Initialize disposable local database
         run: psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f lib/db/migrations/0001_build_this_initial.sql
       - name: Test project-to-export workflow, permissions, and quotas
