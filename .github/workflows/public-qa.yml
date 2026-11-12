@@ -40,3 +40,42 @@ jobs:
           path: playwright-report/
           if-no-files-found: ignore
           retention-days: 7
+
+  database-workflow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: qa_user
+          POSTGRES_PASSWORD: qa_password
+          POSTGRES_DB: build_this_qa
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U qa_user -d build_this_qa"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://qa_user:qa_password@localhost:5432/build_this_qa
+      NODE_ENV: test
+      ALLOW_AI_MOCK_FALLBACK: "true"
+      OPENAI_API_KEY: ci-test-key-no-network
+      AI_DAILY_USER_STAGE_LIMIT: "6"
+      AI_DAILY_GLOBAL_STAGE_LIMIT: "6"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Initialize disposable local database
+        run: psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f lib/db/migrations/0001_build_this_initial.sql
+      - name: Test project-to-export workflow, permissions, and quotas
+        run: pnpm exec vitest run --config vitest.config.ts tests/full-workflow.integration.test.ts tests/presentation-export.integration.test.ts tests/presentation-order.integration.test.ts tests/team-access.integration.test.ts
