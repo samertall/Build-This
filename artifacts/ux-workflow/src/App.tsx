@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, SignUp, Show, useClerk } from "@clerk/react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef } from "react";
+import { ClerkProvider, SignIn, SignUp, Show, useAuth, useClerk } from "@clerk/react";
 import { shadcn } from "@clerk/themes";
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
@@ -10,6 +10,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { basePath } from "@/lib/routing";
 import { PresentationOrderTestPage } from "@/pages/project-presentations";
+import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { PrivacyPage, TermsPage, SupportPage } from "@/pages/legal";
 
 import LandingPage from "@/pages/landing";
@@ -127,6 +128,28 @@ function ProtectedRoute({ component: Component }: { component: any }) {
   );
 }
 
+/**
+ * API routes run in a separate Vercel project behind the frontend rewrite.
+ * Passing Clerk's short-lived session JWT explicitly prevents login UI state
+ * from succeeding while the backend sees every API request as anonymous.
+ * React layout effects configure the shared API client before page queries.
+ */
+function ClerkApiSessionBridge() {
+  const { isLoaded, isSignedIn, getToken } = useAuth();
+
+  useLayoutEffect(() => {
+    if (!isLoaded || !isSignedIn) {
+      setAuthTokenGetter(null);
+      return;
+    }
+
+    setAuthTokenGetter(() => getToken());
+    return () => setAuthTokenGetter(null);
+  }, [getToken, isLoaded, isSignedIn]);
+
+  return null;
+}
+
 function ClerkQueryClientCacheInvalidator() {
   const { addListener } = useClerk();
   const qc = useQueryClient();
@@ -163,6 +186,7 @@ function ClerkProviderWithRoutes() {
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
     >
       <QueryClientProvider client={queryClient}>
+        <ClerkApiSessionBridge />
         <ClerkQueryClientCacheInvalidator />
         <TooltipProvider>
           <MotionConfig reducedMotion="user">

@@ -63,8 +63,24 @@ export default function NewProjectPage() {
           toast({ title: "Project created", description: "Your project is ready. Start by adding sources." });
           setLocation(`/projects/${project.id}`);
         },
-        onError: () => {
-          toast({ title: "Error", description: "Failed to create project. Please try again.", variant: "destructive" });
+        onError: (error: unknown) => {
+          const status = error && typeof error === "object" && "status" in error
+            ? (error as { status?: unknown }).status
+            : undefined;
+          const description = status === 401
+            ? "Your session was not recognized by the API. Sign out and sign in again, then retry."
+            : status === 400
+              ? "One or more fields were rejected. Review your project details and try again."
+              : status === 503
+                ? "The project service is temporarily unavailable. Try again shortly."
+                : typeof status === "number"
+                  ? `The server returned HTTP ${status}. Your project was not confirmed as saved.`
+                  : "The request could not reach the server. Check your connection and retry.";
+          toast({
+            title: status === 401 ? "Authentication required" : "Project creation failed",
+            description,
+            variant: "destructive",
+          });
         },
       }
     );
