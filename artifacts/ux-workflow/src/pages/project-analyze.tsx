@@ -30,6 +30,7 @@ export default function ProjectAnalyzePage() {
   const runAnalysis = useRunAnalysis();
 
   const [selected, setSelected] = useState<Set<string>>(new Set(["research", "problems", "strategy", "journeys", "features", "tasks"]));
+  const [billingRequired, setBillingRequired] = useState(false);
   const [result, setResult] = useState<{ agentsRun: string[]; insightsGenerated: number; problemsGenerated: number; recommendationsGenerated: number; featuresGenerated: number; tasksGenerated: number; message: string } | null>(null);
 
   const toggle = (id: string) => {
@@ -42,10 +43,12 @@ export default function ProjectAnalyzePage() {
 
   const handleRun = () => {
     setResult(null);
+    setBillingRequired(false);
     runAnalysis.mutate(
       { id: projectId, data: { agentTypes: Array.from(selected) } },
       {
         onSuccess: (data: typeof result) => {
+          setBillingRequired(false);
           trackEvent("analysis_completed", {
             agent_count: selected.size,
             all_agents: selected.size === agents.length,
@@ -62,14 +65,16 @@ export default function ProjectAnalyzePage() {
         onError: (error: unknown) => {
           trackEvent("analysis_failed", { agent_count: selected.size });
           const apiData = error && typeof error === "object" && "data" in error
-            ? (error as { data?: { error?: string } }).data
+            ? (error as { data?: { error?: string; code?: string } }).data
             : undefined;
           const status = error && typeof error === "object" && "status" in error
             ? (error as { status?: number }).status
             : undefined;
+          const creditsExhausted = apiData?.code === "ai_credits_exhausted";
+          setBillingRequired(creditsExhausted);
           void qc.invalidateQueries({ queryKey: getGetProjectQueryKey(projectId) });
           toast({
-            title: status === 429 ? "Daily analysis limit reached" : status === 503 ? "Preview unavailable" : "Analysis failed",
+            title: creditsExhausted ? "OpenAI API credits exhausted" : status === 429 ? "Daily analysis limit reached" : status === 503 ? "AI service unavailable" : "Analysis failed",
             description: apiData?.error ?? "AI analysis could not finish. No demonstration results were substituted. Please retry.",
             variant: "destructive",
           });
@@ -166,6 +171,13 @@ export default function ProjectAnalyzePage() {
             )}
           </Button>
 
+          {billingRequired && (
+            <p role="alert" className="text-sm text-destructive mt-4 font-semibold">
+              OpenAI API credits are exhausted. The application owner can restore service in{" "}
+              <a href="https://platform.openai.com/settings/organization/billing/" target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">OpenAI API Billing</a>.
+              Your project and source materials remain saved.
+            </p>
+          )}
           <p className="text-muted-foreground text-sm text-center mt-6 font-medium">
             Analysis runs synchronously. The agent swarm may require <span className="text-foreground font-bold font-mono bg-muted px-2 py-1 rounded">30–90s</span> depending on data volume.
           </p>
