@@ -1,0 +1,40 @@
+name: Public QA (no credentials)
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-browser-and-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Run safe AI and routing unit tests
+        run: pnpm exec vitest run --config vitest.config.ts tests/ai-guard.integration.test.ts tests/ai-quota.integration.test.ts tests/preview-api-routing.integration.test.ts
+      - name: Install Chromium browser
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Test public pages and responsive layouts
+        run: pnpm exec playwright test --config playwright.public.config.ts
+      - name: Upload browser report on failure
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: public-page-playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7

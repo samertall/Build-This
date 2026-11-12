@@ -14,10 +14,23 @@ test("privacy, terms, and support pages are accessible without authentication", 
   }
 });
 
-test("legal pages remain readable on a mobile viewport", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/privacy");
-  await expect(page.getByRole("heading", { name: "Privacy policy" })).toBeVisible();
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
-  expect(overflow).toBe(false);
+test("legal pages stay readable from small mobile through desktop widths", async ({ page }) => {
+  for (const width of [320, 390, 768, 1280]) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const [path, title] of [
+      ["/privacy", "Privacy policy"],
+      ["/terms", "Terms of use"],
+      ["/support", "Help and support"],
+    ]) {
+      const errors: string[] = [];
+      const onPageError = (error: Error) => errors.push(error.message);
+      page.on("pageerror", onPageError);
+      await page.goto(path);
+      await expect(page.getByRole("heading", { level: 1, name: title })).toBeVisible();
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+      expect(overflow, `${path} overflows at ${width}px`).toBe(false);
+      expect(errors, `${path} has JavaScript errors at ${width}px`).toEqual([]);
+      page.off("pageerror", onPageError);
+    }
+  }
 });
