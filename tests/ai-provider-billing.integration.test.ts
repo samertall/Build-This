@@ -29,6 +29,8 @@ beforeAll(() => {
     throw new Error("Provider-billing test must use disposable localhost PostgreSQL");
   }
   vi.stubEnv("ALLOW_AI_MOCK_FALLBACK", "false");
+  vi.stubEnv("AI_PROVIDER", "gemini");
+  vi.stubEnv("GEMINI_API_KEY", "");
   vi.stubEnv("OPENAI_API_KEY", "");
   vi.stubEnv("AI_DAILY_USER_STAGE_LIMIT", "24");
   vi.stubEnv("AI_DAILY_GLOBAL_STAGE_LIMIT", "150");

@@ -1,3 +1,5 @@
+import { AiProviderConfigurationError, selectedAiProvider } from "./ai-provider.js";
+
 /** Safe, client-facing mapping for AI provider failures; never expose API keys or SDK details. */
 export type AiProviderFailure = {
   status: number;
@@ -17,6 +19,18 @@ export function classifyAiProviderError(error: unknown): AiProviderFailure {
       ? object.error.code
       : "";
   const status = typeof object?.status === "number" ? object.status : undefined;
+  const provider = selectedAiProvider();
+
+  if (error instanceof AiProviderConfigurationError) {
+    return {
+      status: 503,
+      code: "ai_provider_not_configured",
+      message: provider === "gemini"
+        ? "Gemini API is not configured. Add GEMINI_API_KEY to the backend Vercel environment, then redeploy. No OpenAI credits are required."
+        : "The OpenAI API key is not configured. Contact the application administrator.",
+      refundReservation: true,
+    };
+  }
 
   if (code === "credit_balance_exhausted") {
     return {
@@ -31,7 +45,9 @@ export function classifyAiProviderError(error: unknown): AiProviderFailure {
     return {
       status: 503,
       code: "ai_provider_usage_limit",
-      message: "The AI provider's usage or spending limit has been reached. Check the OpenAI API organization and project limits.",
+      message: provider === "gemini"
+        ? "The Gemini API project has reached a usage limit. Check Google AI Studio rate limits or try again after its reset."
+        : "The AI provider's usage or spending limit has been reached. Check the OpenAI API organization and project limits.",
       refundReservation: true,
     };
   }
@@ -50,7 +66,18 @@ export function classifyAiProviderError(error: unknown): AiProviderFailure {
     return {
       status: 503,
       code: "ai_provider_not_configured",
-      message: "The AI provider cannot be authenticated. Contact the application administrator.",
+      message: provider === "gemini"
+        ? "Gemini could not authenticate this API key. Verify the key and its Gemini API permissions in Google AI Studio."
+        : "The AI provider cannot be authenticated. Contact the application administrator.",
+      refundReservation: true,
+    };
+  }
+
+  if (provider === "gemini" && (status === 404 || code === "NOT_FOUND")) {
+    return {
+      status: 503,
+      code: "ai_model_unavailable",
+      message: "The selected Gemini model is unavailable for this API project. Check GEMINI_MODEL and the model list in Google AI Studio.",
       refundReservation: true,
     };
   }
