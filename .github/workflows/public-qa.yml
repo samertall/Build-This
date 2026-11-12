@@ -80,4 +80,4 @@ jobs:
       - name: Initialize disposable local database
         run: psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f lib/db/migrations/0001_build_this_initial.sql
       - name: Test project-to-export workflow, permissions, and quotas
-        run: pnpm exec vitest run --config vitest.config.ts tests/full-workflow.integration.test.ts tests/presentation-export.integration.test.ts tests/presentation-order.integration.test.ts tests/team-access.integration.test.ts
+        run: pnpm exec vitest run --config vitest.config.ts tests/full-workflow.integration.test.ts tests/ai-provider-billing.integration.test.ts tests/presentation-export.integration.test.ts tests/presentation-order.integration.test.ts tests/team-access.integration.test.ts
