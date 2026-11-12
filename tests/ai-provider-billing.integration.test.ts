@@ -71,7 +71,7 @@ describe("provider outage quota release (no provider calls, real local database)
       expect(result.status, JSON.stringify(result.body)).toBe(503);
       expect(result.body).toEqual({
         code: "ai_provider_not_configured",
-        error: expect.stringContaining("The AI provider cannot be authenticated"),
+        error: expect.stringContaining("Gemini API is not configured"),
       });
       expect(await globalUsage()).toBe(initial);
     }
