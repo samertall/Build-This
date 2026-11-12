@@ -32,7 +32,8 @@ import {
   CreateProjectCommentBody,
 } from "@workspace/api-zod";
 import { runFullAnalysis } from "../lib/agents.js";
-import { AiQuotaExceededError, requestedStageCount, reserveAiStages } from "../lib/ai-quota.js";
+import { AiQuotaExceededError, requestedStageCount, reserveAiStages, releaseAiStages, type AiQuotaReservation } from "../lib/ai-quota.js";
+import { classifyAiProviderError } from "../lib/ai-provider-error.js";
 import { secondsUntilUtcMidnight } from "../lib/ai-quota-rules.js";
 import { requireProjectAccess, requireProjectRole } from "../middlewares/auth.js";
 import { createPdf, createPptx, exportFileName, isExportSlideArray } from "../lib/presentation-export.js";
@@ -277,6 +278,7 @@ router.delete("/projects/:id/sources/:sourceId", editableRoles, async (req, res)
 
 // AI Analysis
 router.post("/projects/:id/analyze", editableRoles, async (req, res) => {
+  let quotaReservation: AiQuotaReservation | undefined;
   try {
     const id = routeId(req.params.id);
     const parsed = RunAnalysisBody.safeParse(req.body);
@@ -315,7 +317,7 @@ router.post("/projects/:id/analyze", editableRoles, async (req, res) => {
       return;
     }
     try {
-      await reserveAiStages(req.userId!, requestedStageCount(parsed.data.agentTypes));
+      quotaReservation = await reserveAiStages(req.userId!, requestedStageCount(parsed.data.agentTypes));
     } catch (error) {
       if (error instanceof AiQuotaExceededError) {
         // Restore the previous state: hitting the allowance is not an AI error.
@@ -333,8 +335,17 @@ router.post("/projects/:id/analyze", editableRoles, async (req, res) => {
     res.json(result);
   } catch (err) {
     req.log.error({ err }, "Failed to run analysis");
+    const failure = classifyAiProviderError(err);
+    if (failure.refundReservation && quotaReservation) {
+      try {
+        await releaseAiStages(req.userId!, quotaReservation);
+      } catch (refundError) {
+        req.log.error({ err: refundError }, "Failed to release AI quota reservation");
+      }
+    }
     await db.update(projectsTable).set({ analysisStatus: "error", updatedAt: new Date() }).where(eq(projectsTable.id, routeId(req.params.id)));
-    res.status(500).json({ error: "Analysis failed" });
+    if (failure.retryAfter) res.setHeader("Retry-After", String(failure.retryAfter));
+    res.status(failure.status).json({ error: failure.message, code: failure.code });
   }
 });
 
