@@ -24,8 +24,11 @@ jobs:
           node-version: '24'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Typecheck workspace
-        run: pnpm run typecheck
+      - name: Typecheck workspace and API server
+        run: |
+          pnpm run typecheck:libs
+          pnpm run typecheck
+          pnpm --filter @workspace/api-server run typecheck
       - name: Run safe AI, authentication, and routing unit tests
         run: pnpm exec vitest run --config vitest.config.ts tests/ai-guard.integration.test.ts tests/ai-provider-error.integration.test.ts tests/ai-provider-gemini.integration.test.ts tests/ai-quota.integration.test.ts tests/preview-api-routing.integration.test.ts tests/api-session-token.integration.test.ts
       - name: Install Chromium browser
