@@ -1,11 +1,9 @@
 import express, { type Express } from "express";
 import { pinoHttp } from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
-import { publishableKeyFromHost } from "@clerk/shared/keys";
 import {
   CLERK_PROXY_PATH,
   clerkProxyMiddleware,
-  getClerkProxyHost,
 } from "./middlewares/clerkProxyMiddleware.js";
 import router from "./routes/index.js";
 import { logger } from "./lib/logger.js";
@@ -41,12 +39,7 @@ app.use("/api", previewDatabaseGuard);
 
 if (process.env.TEAM_REVIEW_TEST_MODE !== "true") {
   app.use(
-    clerkMiddleware((req) => ({
-      publishableKey: publishableKeyFromHost(
-        getClerkProxyHost(req) ?? "",
-        process.env.CLERK_PUBLISHABLE_KEY,
-      ),
-    })),
+    clerkMiddleware({ publishableKey: process.env.CLERK_PUBLISHABLE_KEY }),
   );
 }
 
