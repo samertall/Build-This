@@ -6,23 +6,9 @@ import { eq, sql } from "drizzle-orm";
 import projectsRouter from "../artifacts/api-server/src/routes/projects";
 import { createRequireAuth } from "../artifacts/api-server/src/middlewares/auth";
 
-// Reproduce the exact Production provider failure with no external API request.
-// This fixture is isolated to the disposable PostgreSQL CI job.
-vi.mock("openai", () => ({
-  OpenAI: class MockOpenAI {
-    chat = {
-      completions: {
-        create: async () => {
-          throw Object.assign(new Error("429 You have no credits remaining."), {
-            status: 429,
-            code: "credit_balance_exhausted",
-          });
-        },
-      },
-    };
-  },
-}));
-
+// Force the built-in provider-configuration failure without making any network calls.
+// The pure classifier unit tests separately exercise the exact credit_balance_exhausted
+// payload from the Vercel incident.
 const TEST_OWNER = "ci-no-credit-owner";
 const app = express();
 app.use(express.json());
@@ -43,6 +29,7 @@ beforeAll(() => {
     throw new Error("Provider-billing test must use disposable localhost PostgreSQL");
   }
   vi.stubEnv("ALLOW_AI_MOCK_FALLBACK", "false");
+  vi.stubEnv("OPENAI_API_KEY", "");
   vi.stubEnv("AI_DAILY_USER_STAGE_LIMIT", "24");
   vi.stubEnv("AI_DAILY_GLOBAL_STAGE_LIMIT", "150");
 });
@@ -64,7 +51,7 @@ async function globalUsage(): Promise<number> {
   return Number(rows.rows[0]?.used_stages ?? 0);
 }
 
-describe("live provider credit error contract (synthetic provider, real local database)", () => {
+describe("provider outage quota release (no provider calls, real local database)", () => {
   it("returns actionable 503, restores quotas and permits a retry without a fake result", async () => {
     const created = await asOwner(request(app).post("/api/projects")).send({
       name: "Synthetic provider credit outage project",
@@ -81,8 +68,8 @@ describe("live provider credit error contract (synthetic provider, real local da
       });
       expect(result.status, JSON.stringify(result.body)).toBe(503);
       expect(result.body).toEqual({
-        code: "ai_credits_exhausted",
-        error: expect.stringContaining("OpenAI API credits are exhausted"),
+        code: "ai_provider_not_configured",
+        error: expect.stringContaining("The AI provider cannot be authenticated"),
       });
       expect(await globalUsage()).toBe(initial);
     }
